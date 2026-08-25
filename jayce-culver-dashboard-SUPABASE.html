@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, viewport-fit=cover">
+<title>Jayce's Training</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Jayce's Training">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#2B2B2B">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='34' fill='%232B2B2B'/%3E%3Ccircle cx='90' cy='90' r='58' fill='%23C8102E' stroke='%23fff' stroke-width='6'/%3E%3Ctext x='90' y='108' font-family='Arial' font-weight='800' font-size='58' fill='%23fff' text-anchor='middle'%3EJC%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --red:#C8102E; --red-deep:#8E0B21; --ink:#1A1A1A; --charcoal:#2B2B2B;
+    --slate:#6B6B6B; --slate-light:#9C9C9C; --paper:#FAFAFA; --card:#FFFFFF;
+    --line:#EDEDED; --border:#E4E4E4; --amber:#B5790A; --blue:#1D6FA5; --green:#1E8E5A;
+    --radius:10px; --shadow:0 2px 10px rgba(0,0,0,0.05); --shadow-lg:0 10px 28px rgba(0,0,0,0.16);
+  }
+  *{box-sizing:border-box;}
+  html{overflow-x:hidden; width:100%;}
+  body{margin:0; overflow-x:hidden; width:100%; background:var(--paper); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; line-height:1.5;}
+  h1,h2,h3{font-family:"Arial Narrow",Helvetica,Arial,sans-serif; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; color:var(--charcoal); margin:0 0 6px 0;}
+
+  .topbar{background:var(--charcoal); color:#fff; position:sticky; top:0; z-index:50; box-shadow:var(--shadow-lg); border-bottom:3px solid var(--red);}
+  .topbar-inner{max-width:900px; margin:0 auto; padding:12px 18px; padding-left:calc(18px + env(safe-area-inset-left)); padding-right:calc(18px + env(safe-area-inset-right)); display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;}
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand-mark{width:34px;height:34px;border-radius:50%; background:var(--red); border:2px solid #fff; display:flex;align-items:center;justify-content:center; font-weight:800; color:#fff; font-size:12px;}
+  .brand h1{color:#fff; font-size:16px; margin:0; letter-spacing:0.05em;}
+  nav.pillnav{display:flex; gap:4px;}
+  nav.pillnav button{background:none; border:none; color:#C9C9C9; font-size:12.5px; text-transform:uppercase; letter-spacing:0.05em; padding:8px 13px; border-radius:20px; font-weight:700; cursor:pointer; font-family:inherit;}
+  nav.pillnav button:hover{background:rgba(255,255,255,0.08); color:#fff;}
+  nav.pillnav button.active{background:var(--red); color:#fff;}
+  .coach-link{background:none; border:1px solid #555; color:#999; font-size:10.5px; padding:5px 10px; border-radius:14px; cursor:pointer; font-family:inherit; text-transform:uppercase; letter-spacing:0.04em;}
+  .coach-link:hover{border-color:var(--red); color:#fff;}
+
+  .wrap{max-width:900px; margin:0 auto; padding:26px 18px 70px;}
+  .view{display:none;}
+  .view.active{display:block;}
+  .eyebrow{display:inline-block; font-size:11px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--red); margin-bottom:6px;}
+  .lede{color:var(--slate); font-size:14px; max-width:600px; margin:4px 0 0;}
+
+  .grid{display:grid; gap:14px;}
+  .grid-2{grid-template-columns:1fr 1fr;}
+  .grid-3{grid-template-columns:repeat(3,1fr);}
+  .grid-4{grid-template-columns:repeat(4,1fr);}
+  @media(max-width:720px){
+    .grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}
+    nav.pillnav{order:3; width:100%; justify-content:flex-start; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:2px; scrollbar-width:none;}
+    nav.pillnav::-webkit-scrollbar{display:none;}
+    nav.pillnav button{flex-shrink:0;}
+  }
+
+  .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px 18px; box-shadow:var(--shadow);}
+  .card.accent-red{border-left:4px solid var(--red);}
+  .card.accent-charcoal{border-left:4px solid var(--charcoal);}
+  .card h3{font-size:13.5px; letter-spacing:0.06em;}
+  .small{font-size:12px; color:var(--slate);}
+
+  label.field-label{display:block; font-size:10px; text-transform:uppercase; letter-spacing:0.06em; color:var(--slate); margin-bottom:4px; font-weight:700;}
+  input.field, textarea.field{width:100%; border:1.5px solid var(--border); border-radius:6px; padding:8px 9px; font-size:13.5px; font-family:inherit; color:var(--ink); background:#fbfbfb;}
+  input.field:focus, textarea.field:focus{outline:none; border-color:var(--red); background:#fff;}
+  textarea.field{resize:vertical; min-height:60px;}
+
+  .tag{display:inline-block; font-size:10px; font-weight:700; padding:3px 9px; border-radius:20px; text-transform:uppercase; letter-spacing:0.03em;}
+  .tag.red{background:rgba(200,16,46,0.10); color:var(--red-deep);}
+  .tag.charcoal{background:rgba(43,43,43,0.08); color:var(--charcoal);}
+  .tag.amber{background:rgba(181,121,10,0.14); color:var(--amber);}
+  .tag.blue{background:rgba(29,111,165,0.10); color:var(--blue);}
+
+  /* HOME */
+  .hero{background:linear-gradient(135deg, var(--charcoal), #1a1a1a 65%, var(--red-deep)); color:#fff; border-radius:14px; padding:24px 26px; margin-bottom:18px;}
+  .hero h2{color:#fff; font-size:22px; margin-bottom:2px;}
+  .hero .phase-line{color:#FF9AA5; font-size:13px; font-weight:700; margin-top:4px;}
+  .today-btn{display:block; width:100%; background:var(--red); color:#fff; border:none; border-radius:10px; padding:16px; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; font-size:15px; cursor:pointer; margin-top:16px; text-align:center;}
+  .today-btn:hover{background:var(--red-deep);}
+  .week-row{display:flex; gap:8px; margin-top:14px;}
+  .week-chip{flex:1; background:rgba(255,255,255,0.08); border-radius:8px; padding:9px 8px; text-align:center; cursor:pointer; border:1px solid rgba(255,255,255,0.12);}
+  .week-chip:hover{background:rgba(255,255,255,0.15);}
+  .week-chip .d{font-weight:800; font-size:12px;}
+  .week-chip .f{font-size:9.5px; color:#C9C9C9; margin-top:2px; text-transform:uppercase; letter-spacing:0.03em;}
+
+  /* WORKOUT */
+  .tabs{display:flex; gap:6px; margin-bottom:12px; border-bottom:2px solid var(--border); flex-wrap:wrap;}
+  .tabs button{background:none; border:none; padding:9px 15px; cursor:pointer; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--slate); border-bottom:3px solid transparent; font-family:inherit;}
+  .tabs button.active{color:var(--charcoal); border-bottom-color:var(--red);}
+  .ex-card{border:1px solid var(--border); border-radius:8px; padding:12px 14px; margin-bottom:10px; background:#fff;}
+  .ex-top{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
+  .ex-name{font-weight:800; font-size:14px;}
+  .ex-sr{font-weight:800; color:var(--red-deep); font-size:13px; white-space:nowrap; text-align:right;}
+  .ex-cue{font-size:11.5px; color:var(--slate); margin:5px 0 10px;}
+  .ex-last{font-size:11.5px; margin-bottom:8px;}
+  .ex-last input{max-width:220px; display:inline-block;}
+  .set-row{display:grid; grid-template-columns:60px 1fr 1fr 34px; gap:8px; align-items:center; margin-bottom:6px;}
+  .set-row .set-label{font-size:11.5px; font-weight:700; color:var(--slate);}
+  .set-row input[type=checkbox]{width:20px; height:20px; accent-color:var(--red); cursor:pointer;}
+  .complete-btn{background:var(--red); color:#fff; border:none; border-radius:8px; padding:13px; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; font-size:13px; cursor:pointer; width:100%; margin-top:8px;}
+  .complete-btn.done{background:var(--green);}
+  .feel-btn{flex:1; background:#fff; border:1.5px solid var(--border); border-radius:8px; padding:10px 6px; cursor:pointer; font-weight:800; font-size:12px; text-align:center; line-height:1.4;}
+  .feel-btn span{display:block;}
+  .feel-btn[data-feel="good"].selected{background:rgba(30,142,90,0.14); border-color:var(--green);}
+  .feel-btn[data-feel="tough"].selected{background:rgba(181,121,10,0.14); border-color:var(--amber);}
+  .feel-btn[data-feel="too-much"].selected{background:rgba(200,16,46,0.10); border-color:var(--red);}
+  .contrast-card{border:1.5px solid var(--red); border-radius:8px; padding:14px; margin-bottom:10px; background:#FFF7F7;}
+  .round-row{display:flex; gap:8px; align-items:center; margin-top:8px;}
+  .round-row input[type=checkbox]{width:20px; height:20px; accent-color:var(--red);}
+
+  /* CALENDAR */
+  .cal-controls{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+  .cal-nav-btn{background:var(--charcoal); color:#fff; border:none; border-radius:6px; padding:7px 13px; font-weight:700; cursor:pointer; font-size:12.5px;}
+  .cal-nav-btn:disabled{opacity:0.3; cursor:not-allowed;}
+  .cal-month-label{font-family:"Arial Narrow",Arial,sans-serif; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; font-size:16px;}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:4px;}
+  .cal-dow{text-align:center; font-size:9.5px; font-weight:800; text-transform:uppercase; color:var(--slate-light); padding:3px 0;}
+  .cal-cell{border:1px solid var(--border); border-radius:6px; min-height:58px; padding:4px; background:#fff; cursor:pointer;}
+  .cal-cell.blank{background:transparent; border:none; cursor:default;}
+  .cal-cell.is-today{border-color:var(--red); box-shadow:0 0 0 2px rgba(200,16,46,0.25);}
+  .cal-cell.is-selected{background:#FFF3F3;}
+  .cal-daynum{font-size:10.5px; font-weight:700;}
+  .cal-pill{display:block; font-size:8px; font-weight:800; border-radius:3px; padding:1px 3px; margin-top:2px; text-transform:uppercase;}
+  .cal-pill.lift{background:rgba(200,16,46,0.12); color:var(--red-deep);}
+  .cal-pill.meet{background:rgba(181,121,10,0.16); color:var(--amber);}
+  .cal-pill.taper{background:rgba(29,111,165,0.12); color:var(--blue);}
+  .cal-pill.phase{background:var(--charcoal); color:#fff;}
+  .cal-pill.nolift{background:rgba(107,107,107,0.16); color:var(--slate);}
+  .cal-pill.modified{background:rgba(142,11,33,0.14); color:var(--red-deep);}
+  .cal-legend{display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; font-size:11px; color:var(--slate);}
+  .cal-legend span{display:inline-flex; align-items:center; gap:5px;}
+  .dot{width:8px; height:8px; border-radius:2px; display:inline-block;}
+
+  /* PROGRESS */
+  .prog-bar-track{height:10px; background:var(--line); border-radius:6px; overflow:hidden; margin-top:8px;}
+  .prog-bar-fill{height:100%; background:var(--red); border-radius:6px; transition:width .2s ease;}
+  .prog-nums{display:flex; justify-content:space-between; font-size:11px; color:var(--slate); margin-top:4px;}
+
+  /* COACH MODE */
+  #coach-panel{display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100; align-items:center; justify-content:center; padding:20px;}
+  #coach-panel.open{display:flex;}
+  .coach-box{background:#fff; border-radius:12px; padding:20px; max-width:700px; width:100%; max-height:85vh; overflow:auto;}
+  .coach-box textarea{width:100%; height:340px; font-family:"SF Mono",Consolas,monospace; font-size:11.5px; border:1.5px solid var(--border); border-radius:8px; padding:10px;}
+  .coach-actions{display:flex; gap:8px; margin-top:10px;}
+  .coach-actions button{flex:1; padding:11px; border-radius:8px; border:none; font-weight:700; cursor:pointer; font-size:13px;}
+  .btn-apply{background:var(--red); color:#fff;}
+  .btn-copy{background:var(--charcoal); color:#fff;}
+  .btn-close{background:var(--line); color:var(--charcoal);}
+
+  .footer{text-align:center; padding:24px 18px; padding-bottom:calc(24px + env(safe-area-inset-bottom)); color:var(--slate-light); font-size:11px; border-top:1px solid var(--border); margin-top:10px;}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand"><div class="brand-mark">JC</div><h1>Jayce's Training</h1></div>
+    <nav class="pillnav">
+      <button data-view="home" class="active" onclick="showView('home')">Home</button>
+      <button data-view="workouts" onclick="showView('workouts')">Workouts</button>
+      <button data-view="calendar" onclick="showView('calendar')">Calendar</button>
+      <button data-view="progress" onclick="showView('progress')">Progress</button>
+      <button data-view="rules" onclick="showView('rules')">Training Rules</button>
+      <button data-view="history" onclick="showView('history')">History</button>
+    </nav>
+    <button class="coach-link" onclick="openCoachPanel()">Coach Mode</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- ===================== HOME ===================== -->
+  <div class="view active" id="view-home">
+    <div class="hero">
+      <span class="eyebrow" style="color:#FF6B7A;">Jayce's Training</span>
+      <h2 id="home-phase">Current Phase: Loading...</h2>
+      <div class="phase-line" id="home-phase-blurb"></div>
+      <button class="today-btn" onclick="goToToday()">Today's Workout &rarr;</button>
+      <div class="week-row" id="home-week"></div>
+    </div>
+    <div class="card accent-red">
+      <h3>Upcoming Meet</h3>
+      <div id="home-next-meet" class="small" style="margin-top:6px;"></div>
+    </div>
+  </div>
+
+  <!-- ===================== WORKOUTS ===================== -->
+  <div class="view" id="view-workouts">
+    <span class="eyebrow">The Program</span>
+    <h2 style="font-size:19px;">Workouts</h2>
+    <p class="lede">Pick a phase, pick a day.</p>
+    <div class="tabs" id="phase-tabs" style="margin-top:14px;"></div>
+    <div class="tabs" id="day-tabs"></div>
+    <div id="workout-content"></div>
+  </div>
+
+  <!-- ===================== CALENDAR ===================== -->
+  <div class="view" id="view-calendar">
+    <span class="eyebrow">Season At A Glance</span>
+    <h2 style="font-size:19px;">Calendar</h2>
+    <p class="lede">Tap a date for details. Sep 2026 &ndash; Mar 2027.</p>
+    <div class="card" style="margin-top:12px;">
+      <div class="cal-controls">
+        <button class="cal-nav-btn" id="cal-prev" onclick="calShift(-1)">&larr;</button>
+        <div class="cal-month-label" id="cal-label"></div>
+        <button class="cal-nav-btn" id="cal-next" onclick="calShift(1)">&rarr;</button>
+      </div>
+      <div class="cal-grid" id="cal-dow-row"></div>
+      <div class="cal-grid" id="cal-grid" style="margin-top:4px;"></div>
+      <div class="cal-legend">
+        <span><i class="dot" style="background:rgba(200,16,46,0.5);"></i> Lift</span>
+        <span><i class="dot" style="background:rgba(181,121,10,0.6);"></i> Meet</span>
+        <span><i class="dot" style="background:rgba(29,111,165,0.5);"></i> Taper</span>
+        <span><i class="dot" style="background:var(--charcoal);"></i> Phase Starts</span>
+      </div>
+    </div>
+    <div class="card accent-red" id="cal-detail" style="margin-top:12px;">
+      <p class="small">Tap a date above to see what's happening that day.</p>
+    </div>
+    <div class="card" style="margin-top:12px;">
+      <p class="small"><strong>HS Sectionals (Feb 12), Districts (Feb 20), and States (Feb 26&ndash;27)</strong> are on the calendar. The championship taper starting around Feb 10 shows as "Modified" &mdash; the exact lifting plan for that stretch is still TBD and can be filled in later via Coach Mode.</p>
+    </div>
+  </div>
+
+  <!-- ===================== PROGRESS ===================== -->
+  <div class="view" id="view-progress">
+    <span class="eyebrow">Keep It Simple</span>
+    <h2 style="font-size:19px;">Progress</h2>
+    <p class="lede">Fill in your starting number and today's number for each lift. Bar fills as you get stronger.</p>
+    <div class="grid grid-2" id="progress-grid" style="margin-top:14px;"></div>
+  </div>
+
+  <!-- ===================== TRAINING RULES ===================== -->
+  <div class="view" id="view-rules">
+    <span class="eyebrow">How We Train</span>
+    <h2 style="font-size:19px;">Training Rules</h2>
+    <p class="lede">A few simple ideas behind every workout on this site &mdash; not rules being handed down, just the reasoning so you know why it's built this way.</p>
+    <div class="grid grid-2" style="margin-top:14px;">
+      <div class="card accent-red"><h3>Pool First</h3><p class="small" style="margin-top:6px;">Lifting supports swimming &mdash; it should not interfere with swim performance.</p></div>
+      <div class="card accent-charcoal"><h3>No Failure</h3><p class="small" style="margin-top:6px;">Do not train to failure. Finish normal strength sets with roughly 2&ndash;3 good reps left.</p></div>
+      <div class="card accent-red"><h3>Quality Over Weight</h3><p class="small" style="margin-top:6px;">Perfect technique and controlled reps matter more than adding weight.</p></div>
+      <div class="card accent-charcoal"><h3>Don't Chase Soreness</h3><p class="small" style="margin-top:6px;">The goal is to get stronger and more explosive, not to be extremely sore.</p></div>
+      <div class="card accent-red"><h3>Explosive = Explosive</h3><p class="small" style="margin-top:6px;">For jumps and other power exercises, stop if speed, jump height, or landing quality starts to decline.</p></div>
+      <div class="card accent-charcoal"><h3>50&ndash;60 Minutes</h3><p class="small" style="margin-top:6px;">The goal is to get quality work done without turning lifting into another long training session.</p></div>
+    </div>
+    <div class="card accent-red" style="margin-top:14px;">
+      <h3>Listen To Your Body</h3>
+      <p class="small" style="margin-top:6px;">If swim fatigue is unusually high, communicate with the coach and adjust rather than forcing the workout. That's not weakness &mdash; that's smart training.</p>
+    </div>
+  </div>
+
+  <!-- ===================== HISTORY (Supabase) ===================== -->
+  <div class="view" id="view-history">
+    <span class="eyebrow">Permanent Record</span>
+    <h2 style="font-size:19px;">History</h2>
+    <p class="lede">Every completed workout, saved to the cloud &mdash; visible from any device, newest first.</p>
+    <div id="history-status" class="card accent-charcoal" style="margin-top:14px;"><p class="small">Loading history&hellip;</p></div>
+    <div id="history-list" style="margin-top:14px;"></div>
+  </div>
+
+  <div class="footer">Jayce's Training &middot; Mon/Wed/Fri lifting &middot; Sep 2026 &ndash; Mar 2027 &middot; Fields reset when you close the page unless you write your numbers down.</div>
+</div>
+
+<!-- ===================== COACH MODE PANEL ===================== -->
+<!-- ===================== LOGIN GATE ===================== -->
+<div id="login-panel" style="position:fixed; inset:0; background:var(--charcoal); z-index:200; display:flex; align-items:center; justify-content:center; padding:20px;">
+  <div class="card" style="max-width:380px; width:100%;">
+    <h3>Sign In</h3>
+    <p class="small" style="margin-top:6px;">Jayce and Coach each sign in with their own account to see Jayce's training data.</p>
+    <label class="field-label" style="margin-top:12px;">Email</label>
+    <input class="field" id="login-email" type="email" placeholder="you@example.com">
+    <label class="field-label" style="margin-top:10px;">Password</label>
+    <input class="field" id="login-password" type="password" placeholder="Password">
+    <button class="complete-btn" style="margin-top:14px;" onclick="doSignIn()">Sign In</button>
+    <p class="small" id="login-status" style="margin-top:10px; color:var(--red-deep);"></p>
+  </div>
+</div>
+
+<div id="coach-panel">
+  <div class="coach-box">
+    <h3>Coach Mode</h3>
+    <p class="small">This is the entire program &mdash; exercises, sets, reps, rest, cues, meets, phase dates &mdash; as editable text. Change anything below, hit <strong>Apply</strong> to preview it live on the site right now. Changes made here reset when the page reloads &mdash; to make them permanent, hit <strong>Copy</strong> and send the text back so the CONFIG section of the file can be updated for good, or paste it directly into the CONFIG block near the top of the file's &lt;script&gt; in any text editor.</p>
+    <textarea id="coach-json"></textarea>
+    <div class="coach-actions">
+      <button class="btn-apply" onclick="applyCoachEdits()">Apply</button>
+      <button class="btn-copy" onclick="copyCoachJson()">Copy</button>
+      <button class="btn-close" onclick="closeCoachPanel()">Close</button>
+    </div>
+    <p class="small" id="coach-status" style="margin-top:8px;"></p>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   COACH: EDIT ANYTHING BELOW THIS LINE.
+   This single CONFIG object drives the entire site — exercises, sets,
+   reps, rest, cues, meets, tapers, and phase date ranges. Change values
+   here (in this file, in any text editor) and the site updates — no
+   rebuild needed. You can also use the in-page "Coach Mode" button to
+   preview edits live before committing them here permanently.
+   ========================================================================= */
+var CONFIG = {
+  seasonStart: "2026-09-07",
+  seasonEnd:   "2027-03-21",
+
+  phaseBlocks: [
+    {phase:1, start:"2026-09-07", end:"2026-10-25", label:"Phase 1: Foundation", blurb:"Learning the lifts, building your base."},
+    {phase:2, start:"2026-10-26", end:"2027-01-03", label:"Phase 2: Strength",   blurb:"Heavier loads — teaching your body to produce more force."},
+    {phase:3, start:"2027-01-04", end:"2027-03-21", label:"Phase 3: Power",      blurb:"Turning strength into speed."}
+  ],
+
+  meets: [
+    {start:"2026-10-04", end:"2026-10-04", label:"CAC Pentathlon"},
+    {start:"2026-10-17", end:"2026-10-17", label:"Tri Meet"},
+    {start:"2026-10-23", end:"2026-10-25", label:"WTRC Meet"},
+    {start:"2026-11-06", end:"2026-11-08", label:"Fort Wayne Invite"},
+    {start:"2026-12-11", end:"2026-12-13", label:"Midseason Meet"},
+    {start:"2027-02-12", end:"2027-02-12", label:"HS Sectionals"},
+    {start:"2027-02-20", end:"2027-02-20", label:"HS Districts"},
+    {start:"2027-02-26", end:"2027-02-27", label:"HS States"},
+    {start:"2027-03-04", end:"2027-03-07", label:"Makos Senior Champs"},
+    {start:"2027-03-18", end:"2027-03-21", label:"Sectionals"}
+  ],
+
+  // "Reduced" tapers: Jayce still lifts these days, just lighter. Does NOT remove the workout.
+  tapers: [
+    {start:"2026-11-04", end:"2026-11-05", label:"Taper: Fort Wayne Invite"},
+    {start:"2026-12-08", end:"2026-12-10", label:"Taper: Midseason Meet"}
+  ],
+
+  // liftOverrides: for specific lift days (Mon/Wed/Fri) where Jayce is NOT doing the normal
+  // workout. mode "no-lift" = full rest, no workout shown at all. mode "modified" = plan is
+  // still TBD, shown as "Modified Workout" instead of the normal exercise list. These take
+  // priority over the normal Mon/Wed/Fri program on the calendar and in "Today's Workout."
+  liftOverrides: [
+    {start:"2026-10-23", end:"2026-10-23", mode:"no-lift", label:"No Lift — WTRC Meet"},
+    {start:"2026-11-04", end:"2026-11-04", mode:"modified", label:"Modified Workout"},
+    {start:"2026-11-06", end:"2026-11-06", mode:"no-lift", label:"No Lift — Fort Wayne Invite"},
+    {start:"2026-11-09", end:"2026-11-09", mode:"no-lift", label:"No Lift"},
+    {start:"2026-11-27", end:"2026-11-27", mode:"no-lift", label:"No Lift — Thanksgiving"},
+    {start:"2026-12-09", end:"2026-12-09", mode:"modified", label:"Modified Workout"},
+    {start:"2026-12-11", end:"2026-12-11", mode:"no-lift", label:"No Lift — Midseason Meet"},
+    {start:"2026-12-14", end:"2026-12-14", mode:"no-lift", label:"No Lift"},
+    {start:"2027-01-01", end:"2027-01-01", mode:"no-lift", label:"No Lift — New Year's Day"},
+    {start:"2027-02-10", end:"2027-02-28", mode:"modified", label:"HS Championship Taper — plan TBD"},
+    {start:"2027-03-03", end:"2027-03-03", mode:"no-lift", label:"No Lift — Senior Champs"},
+    {start:"2027-03-05", end:"2027-03-05", mode:"no-lift", label:"No Lift — Senior Champs"},
+    {start:"2027-03-15", end:"2027-03-19", mode:"no-lift", label:"No Lift — Sectionals Week"}
+  ],
+
+  hsChampionships: "HS Sectionals Feb 12, Districts Feb 20, States Feb 26–27, 2027",
+
+  // Each day: array of exercises. type "sets" = normal exercise with N sets.
+  // type "contrast" = heavy lift + explosive jump pair. type "superset" = two moves back to back.
+  program: {
+    1: {
+      mon: {label:"Lower + Pull", exercises:[
+        {type:"sets", name:"Box Jump", sets:["3","3","3"], rest:"60-90 sec", cue:"Jump as high as possible. Land softly and reset completely between reps. Stop if jump height or landing quality drops."},
+        {type:"sets", name:"Trap Bar Deadlift", sets:["8","8","8"], rest:"2 min", cue:"Own the setup. Drive through the full foot."},
+        {type:"sets", name:"Weighted Step-Up", sets:["8/leg","8/leg","8/leg"], rest:"90 sec", cue:"Control the step down — that's where step-ups get you."},
+        {type:"sets", name:"Pull-Up", sets:["8-10","8-10","8-10"], rest:"90 sec", cue:"Full range, controlled tempo."},
+        {type:"sets", name:"Chest-Supported / Angled Seated Row", sets:["10","10","10"], rest:"75-90 sec", cue:"Squeeze the shoulder blades together at the top."},
+        {type:"sets", name:"Bird Dog / Anti-Rotation Press", sets:["10/side","10/side","10/side"], rest:"60 sec", cue:"Core stability — move slow, stay square."}
+      ]},
+      wed: {label:"Upper + Shoulder Health", exercises:[
+        {type:"sets", name:"Dumbbell Chest Press", sets:["10","10","10"], rest:"90 sec", cue:"Control the tempo, no bounce off the chest."},
+        {type:"sets", name:"Dips or Tricep Pushdown", sets:["10","10","10"], rest:"90 sec", cue:"Pick whichever feels better on your shoulders that day."},
+        {type:"sets", name:"Face Pull", sets:["15","15","15"], rest:"60 sec", cue:"Light load, pull to your face, elbows high."},
+        {type:"sets", name:"Shoulder External Rotation", sets:["12/side","12/side","12/side"], rest:"45 sec", cue:"What this is: light band or cable, elbow tucked at your side, rotate your forearm outward. Strengthens the small rotator cuff muscles that stabilize your shoulder through every stroke."},
+        {type:"sets", name:"DB Lateral Raise", sets:["10","10","10"], rest:"60 sec", cue:"Light weight, lead with your elbows, don't shrug."}
+      ]},
+      fri: {label:"Full Body + Posterior Chain", exercises:[
+        {type:"sets", name:"Back Squat", sets:["10","10","10"], rest:"2 min", cue:"Full depth, controlled tempo."},
+        {type:"sets", name:"Dumbbell RDL", sets:["8-10","8-10","8-10"], rest:"90 sec", cue:"Push your hips back, feel your hamstrings load."},
+        {type:"sets", name:"Seated Row", sets:["10","10","10"], rest:"75 sec", cue:"Pause 1 second at the squeeze."},
+        {type:"sets", name:"Bent-Over Lateral Raise", sets:["12-15","12-15","12-15"], rest:"60 sec", cue:"Rear delts — light weight, strict form. Skip the 3rd set if the first two felt like plenty."},
+        {type:"sets", name:"Pallof Press", sets:["10/side","10/side","10/side"], rest:"45 sec", cue:"Resist rotation, slow and controlled."},
+        {type:"sets", name:"Bicep Curls", sets:["10","10","10"], rest:"60 sec", cue:"Controlled — no swinging the weight."}
+      ]}
+    },
+    2: {
+      mon: {label:"Lower + Pull", exercises:[
+        {type:"sets", name:"Trap Bar Deadlift", sets:["5-6","5-6","5-6","5-6"], rest:"2.5 min", cue:"Heavier — pull the slack out of the bar first, then pull up."},
+        {type:"sets", name:"Weighted Step-Up", sets:["6-8/leg","6-8/leg","6-8/leg"], rest:"2 min", cue:"Added load vs. Phase 1 — control the step down."},
+        {type:"sets", name:"Weighted Pull-Up", sets:["5","5","5","5"], rest:"2 min", cue:"Add load once bodyweight x8-10 felt solid."},
+        {type:"sets", name:"Chest-Supported / Angled Seated Row", sets:["8","8","8"], rest:"90 sec", cue:"Controlled, no momentum."}
+      ]},
+      wed: {label:"Upper + Shoulder Health", exercises:[
+        {type:"sets", name:"Dumbbell Chest Press", sets:["5-7","5-7","5-7","5-7"], rest:"2.5 min", cue:"Heavier — press with intent."},
+        {type:"sets", name:"Tricep Rope Pressdown", sets:["8","8","8"], rest:"90 sec", cue:"Elbows pinned, full extension."},
+        {type:"sets", name:"Face Pull", sets:["15","15","15"], rest:"60 sec", cue:"Every phase — non-negotiable."},
+        {type:"sets", name:"Shoulder External Rotation", sets:["12/side","12/side","12/side"], rest:"45 sec", cue:"Same as Phase 1 — keep it light and controlled."}
+      ]},
+      fri: {label:"Full Body + Posterior Chain", exercises:[
+        {type:"sets", name:"Box Jump", sets:["3-5","3-5","3-5"], rest:"2 min", cue:"Fresh legs first — land soft, reset each rep. Skip a rep if landings get sloppy."},
+        {type:"sets", name:"Back Squat", sets:["5-6","5-6","5-6"], rest:"2 min", cue:"Heavier, strict depth and position."},
+        {type:"superset", name:"Hamstring Curl + Leg Extension Superset", rounds:3, rest:"2 min", cue:"Straight from curls into extensions, no rest between the two — rest after each round."},
+        {type:"sets", name:"Seated Row", sets:["8","8","8"], rest:"90 sec", cue:"Add load vs. Phase 1."},
+        {type:"sets", name:"Bicep Curls", sets:["10","10"], rest:"45 sec", cue:"Controlled arm work."}
+      ]}
+    },
+    3: {
+      mon: {label:"Lower + Pull", exercises:[
+        {type:"contrast", name:"Trap Bar Deadlift &rarr; Box Jump", rounds:3, liftReps:"2-3", jumpReps:"2-3", restBetween:"20-30 sec", restRounds:"2-3 min", cue:"Heavy pull, short rest, then max-effort box jumps. Quality over quantity — stop if jump height or landing gets sloppy."},
+        {type:"sets", name:"Weighted Pull-Up", sets:["5","5","5"], rest:"2 min", cue:"Explosive pull, controlled descent."},
+        {type:"sets", name:"Chest-Supported Row", sets:["8","8"], rest:"90 sec", cue:"Maintenance volume only."},
+        {type:"sets", name:"Bicep Curls", sets:["5-8","5-8"], rest:"45 sec", cue:"Maintenance."}
+      ]},
+      wed: {label:"Upper + Shoulder Health", exercises:[
+        {type:"sets", name:"Dumbbell Chest Press", sets:["5","5","5"], rest:"2.5 min", cue:"Speed on the press, control the lower."},
+        {type:"sets", name:"Skull Crushers", sets:["5-8","5-8","5-8"], rest:"90 sec", cue:"Slow and controlled."},
+        {type:"sets", name:"Face Pull", sets:["10","10"], rest:"60 sec", cue:"Maintained every phase."},
+        {type:"sets", name:"Shoulder External Rotation", sets:["10/side","10/side"], rest:"45 sec", cue:"Maintained every phase."}
+      ]},
+      fri: {label:"Full Body + Posterior Chain", exercises:[
+        {type:"contrast", name:"Back Squat &rarr; Broad Jump", rounds:3, liftReps:"2-3", jumpReps:"2", restBetween:"20-30 sec", restRounds:"2-3 min", cue:"Heavy squats, then explosive broad jumps. Track your jump distance — that's the number that matters here."},
+        {type:"superset", name:"Hamstring Curl + Leg Extension Superset", rounds:3, rest:"2 min", cue:"Maintain weight from Phase 2."},
+        {type:"sets", name:"Seated Row", sets:["5-6","5-6","5-6"], rest:"90 sec", cue:"Controlled, no pulling from the lower back."}
+      ]}
+    }
+  }
+};
+/* ========================= END COACH-EDITABLE SECTION ===================== */
+
+(function(){
+  var DAY_KEYS = {1:'mon', 3:'wed', 5:'fri'};
+  var DAY_NAMES = {mon:'Monday', wed:'Wednesday', fri:'Friday'};
+  var state = { workoutPhase: null, workoutDay: null, calCursor: null };
+  var workoutLog = [];
+
+  // ---------------- SUPABASE ----------------
+  var SUPABASE_URL = "https://scjfzzcpiirhlmkamqcg.supabase.co";
+  var SUPABASE_ANON_KEY = "sb_publishable_v83BXXAIW3UoMrndPi4tCw_cMoaPbnR";
+  var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  var auth = { user:null, role:null, athleteId:null };
+
+  window.doSignIn = async function(){
+    var email = document.getElementById('login-email').value.trim();
+    var password = document.getElementById('login-password').value;
+    var status = document.getElementById('login-status');
+    status.textContent = 'Signing in...';
+    var res = await sb.auth.signInWithPassword({ email:email, password:password });
+    if (res.error){ status.textContent = res.error.message; return; }
+    await loadProfileAndStart();
+  };
+
+  async function loadProfileAndStart(){
+    var status = document.getElementById('login-status');
+    var sessionRes = await sb.auth.getSession();
+    var user = sessionRes.data.session ? sessionRes.data.session.user : null;
+    if (!user){ return; }
+    auth.user = user;
+    var profRes = await sb.from('profiles').select('role,athlete_id').eq('id', user.id).single();
+    if (profRes.error || !profRes.data){
+      if (status) status.textContent = 'Signed in, but no profile is set up for this account yet. Ask your coach to finish the Supabase setup step.';
+      return;
+    }
+    auth.role = profRes.data.role;
+    auth.athleteId = profRes.data.athlete_id;
+    document.getElementById('login-panel').style.display = 'none';
+    initDashboard();
+  }
+
+  function parseDate(s){ var p=s.split('-'); return new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2])); }
+  function sameDay(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+  function inRange(d,s,e){ return d>=parseDate(s) && d<=parseDate(e); }
+  function todayMid(){ var d=new Date(); return new Date(d.getFullYear(),d.getMonth(),d.getDate()); }
+  function fmtLong(d){ return d.toLocaleDateString('en-US',{weekday:'long', month:'long', day:'numeric'}); }
+  function fmtShort(d){ return d.toLocaleDateString('en-US',{month:'short', day:'numeric'}); }
+
+  function getPhaseBlock(d){
+    for (var i=0;i<CONFIG.phaseBlocks.length;i++){ if (inRange(d, CONFIG.phaseBlocks[i].start, CONFIG.phaseBlocks[i].end)) return CONFIG.phaseBlocks[i]; }
+    return null;
+  }
+  function getMeet(d){
+    for (var i=0;i<CONFIG.meets.length;i++){ if (inRange(d, CONFIG.meets[i].start, CONFIG.meets[i].end)) return CONFIG.meets[i]; }
+    return null;
+  }
+  function getTaper(d){
+    for (var i=0;i<CONFIG.tapers.length;i++){ if (inRange(d, CONFIG.tapers[i].start, CONFIG.tapers[i].end)) return CONFIG.tapers[i]; }
+    return null;
+  }
+  function getLiftOverride(d){
+    if (!CONFIG.liftOverrides) return null;
+    for (var i=0;i<CONFIG.liftOverrides.length;i++){ if (inRange(d, CONFIG.liftOverrides[i].start, CONFIG.liftOverrides[i].end)) return CONFIG.liftOverrides[i]; }
+    return null;
+  }
+  function isLiftDate(d){
+    var wd = d.getDay();
+    return (wd===1||wd===3||wd===5) && inRange(d, CONFIG.seasonStart, CONFIG.seasonEnd);
+  }
+  function addDays(d, n){ var r = new Date(d); r.setDate(r.getDate()+n); return r; }
+  function nextMeet(today){
+    var upcoming = CONFIG.meets.filter(function(m){ return parseDate(m.end) >= today; });
+    upcoming.sort(function(a,b){ return parseDate(a.start)-parseDate(b.start); });
+    return upcoming[0] || null;
+  }
+
+  // ---------------- VIEW SWITCHING ----------------
+  window.showView = function(name){
+    document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
+    document.getElementById('view-'+name).classList.add('active');
+    document.querySelectorAll('nav.pillnav button').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-view')===name); });
+    if (name==='calendar') renderCalendar();
+    if (name==='progress') renderProgress();
+    if (name==='history') renderHistory();
+  };
+
+  window.goToToday = function(){
+    var today = todayMid();
+    var block = getPhaseBlock(today);
+    var wd = today.getDay();
+    var dayKey = DAY_KEYS[wd];
+    if (block && dayKey){
+      selectPhase(block.phase);
+      selectDay(dayKey);
+    } else {
+      selectPhase(block ? block.phase : 1);
+      selectDay('mon');
+    }
+    showView('workouts');
+  };
+
+  // ---------------- HOME ----------------
+  function renderHome(){
+    var today = todayMid();
+    var block = getPhaseBlock(today);
+    document.getElementById('home-phase').textContent = 'Current Phase: ' + (block ? block.label : (today < parseDate(CONFIG.seasonStart) ? 'Not Started Yet' : 'Season Complete'));
+    document.getElementById('home-phase-blurb').textContent = block ? block.blurb : (today < parseDate(CONFIG.seasonStart) ? ('Lifting begins ' + fmtLong(parseDate(CONFIG.seasonStart))) : 'Great season. Rest up.');
+
+    var mondayOffset = (today.getDay()===0) ? -6 : (1-today.getDay());
+    var thisMonday = addDays(today, mondayOffset);
+
+    var weekHtml = '';
+    [0,2,4].forEach(function(offset){
+      var d = addDays(thisMonday, offset);
+      var wd = d.getDay();
+      var key = DAY_KEYS[wd];
+      var label = DAY_NAMES[key].slice(0,3).toUpperCase();
+      var dayBlock = getPhaseBlock(d);
+      var phaseForChip = dayBlock ? dayBlock.phase : (block ? block.phase : 1);
+      var ov = isLiftDate(d) ? getLiftOverride(d) : null;
+      var focus, style = '';
+      if (ov && ov.mode==='no-lift'){ focus = 'No Lift'; style=' style="opacity:0.6;"'; }
+      else if (ov && ov.mode==='modified'){ focus = 'Modified'; }
+      else { focus = (CONFIG.program[phaseForChip] && CONFIG.program[phaseForChip][key]) ? CONFIG.program[phaseForChip][key].label : ''; }
+      weekHtml += '<div class="week-chip"'+style+' onclick="selectPhase('+phaseForChip+');selectDay(\''+key+'\');showView(\'workouts\')"><div class="d">'+label+'</div><div class="f">'+focus+'</div></div>';
+    });
+    document.getElementById('home-week').innerHTML = weekHtml;
+
+    var nm = nextMeet(today);
+    document.getElementById('home-next-meet').innerHTML = nm
+      ? '<strong>'+nm.label+'</strong> &mdash; ' + fmtShort(parseDate(nm.start)) + (nm.start!==nm.end ? ' to ' + fmtShort(parseDate(nm.end)) : '')
+      : 'Nothing on the calendar right now.';
+  }
+
+  // ---------------- WORKOUTS ----------------
+  window.selectPhase = function(p){
+    state.workoutPhase = p;
+    if (!state.workoutDay) state.workoutDay = 'mon';
+    renderPhaseTabs();
+    renderDayTabs();
+    renderWorkout();
+  };
+  window.selectDay = function(d){
+    state.workoutDay = d;
+    renderDayTabs();
+    renderWorkout();
+  };
+
+  function renderPhaseTabs(){
+    var html = '';
+    [1,2,3].forEach(function(p){
+      html += '<button class="'+(state.workoutPhase===p?'active':'')+'" onclick="selectPhase('+p+')">Phase '+p+'</button>';
+    });
+    document.getElementById('phase-tabs').innerHTML = html;
+  }
+  function renderDayTabs(){
+    var html = '';
+    ['mon','wed','fri'].forEach(function(d){
+      html += '<button class="'+(state.workoutDay===d?'active':'')+'" onclick="selectDay(\''+d+'\')">'+DAY_NAMES[d]+'</button>';
+    });
+    document.getElementById('day-tabs').innerHTML = html;
+  }
+
+  function renderSetsExercise(ex, idx){
+    var h = '<div class="ex-card" data-exercise="'+ex.name.replace(/"/g,'&quot;')+'">';
+    h += '<div class="ex-top"><span class="ex-name">'+ex.name+'</span><span class="ex-sr">'+ex.sets.length+' &times; '+ex.sets[0]+'</span></div>';
+    h += '<div class="ex-cue">Rest '+ex.rest+' &middot; '+ex.cue+'</div>';
+    h += '<div class="ex-last"><label class="field-label">Last Workout</label><input class="field" placeholder="e.g. 185 x 8 x 3"></div>';
+    ex.sets.forEach(function(target, i){
+      h += '<div class="set-row" data-set="'+(i+1)+'"><span class="set-label">Set '+(i+1)+'</span>';
+      h += '<input class="field log-weight" placeholder="weight">';
+      h += '<input class="field log-reps" placeholder="target '+target+'">';
+      h += '<input type="checkbox" class="log-done">';
+      h += '</div>';
+    });
+    h += '</div>';
+    return h;
+  }
+  function renderSupersetExercise(ex){
+    var h = '<div class="contrast-card" data-exercise="'+ex.name.replace(/"/g,'&quot;')+'">';
+    h += '<div class="ex-name">'+ex.name+'</div>';
+    h += '<div class="ex-cue" style="margin-top:6px;">'+ex.rounds+' rounds &middot; rest '+ex.rest+' between rounds &middot; '+ex.cue+'</div>';
+    h += '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;"><input class="field log-weight" data-slot="a" placeholder="Hamstring curl weight"><input class="field log-weight" data-slot="b" placeholder="Leg extension weight"></div>';
+    for (var r=1;r<=ex.rounds;r++){
+      h += '<div class="round-row" data-set="'+r+'"><input type="checkbox" class="log-done"><span class="small">Round '+r+' complete</span></div>';
+    }
+    h += '</div>';
+    return h;
+  }
+  function renderContrastExercise(ex){
+    var h = '<div class="contrast-card" data-exercise="'+ex.name.replace(/"/g,'&quot;')+'">';
+    h += '<div class="ex-name">'+ex.name+'</div>';
+    h += '<div class="ex-cue" style="margin-top:6px;">'+ex.rounds+' rounds: lift &times;'+ex.liftReps+' &rarr; rest '+ex.restBetween+' &rarr; jump &times;'+ex.jumpReps+' &rarr; rest '+ex.restRounds+' before repeating.<br>'+ex.cue+'</div>';
+    h += '<div style="margin-top:8px;"><label class="field-label">Lift Weight</label><input class="field log-weight" placeholder="lb"></div>';
+    for (var r=1;r<=ex.rounds;r++){
+      h += '<div class="round-row" data-set="'+r+'"><input type="checkbox" class="log-done"><span class="small">Round '+r+' complete</span></div>';
+    }
+    h += '</div>';
+    return h;
+  }
+
+  function renderWorkout(){
+    var day = CONFIG.program[state.workoutPhase] && CONFIG.program[state.workoutPhase][state.workoutDay];
+    if (!day){ document.getElementById('workout-content').innerHTML = '<div class="card"><p class="small">No workout found.</p></div>'; return; }
+
+    var today = todayMid();
+    var meet = getMeet(today);
+    var taper = getTaper(today);
+    var isToday = (function(){
+      var block = getPhaseBlock(today);
+      var wd = today.getDay();
+      return block && block.phase===state.workoutPhase && DAY_KEYS[wd]===state.workoutDay;
+    })();
+    var todayOverride = isToday ? getLiftOverride(today) : null;
+
+    var html = '<div class="card accent-red">';
+    html += '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">';
+    html += '<h3>Phase '+state.workoutPhase+' &middot; '+DAY_NAMES[state.workoutDay]+' &mdash; '+day.label+'</h3>';
+    if (todayOverride && todayOverride.mode==='no-lift') html += '<span class="tag charcoal">No Lift Today</span>';
+    else if (todayOverride && todayOverride.mode==='modified') html += '<span class="tag amber">Modified Workout</span>';
+    else if (isToday && meet) html += '<span class="tag amber">Meet Week: '+meet.label+' &mdash; lighten the load</span>';
+    else if (isToday && taper) html += '<span class="tag blue">Taper Week &mdash; keep it light</span>';
+    html += '</div>';
+    if (isToday && !todayOverride) html += '<p class="small" style="margin-top:4px;">This is today\'s workout.</p>';
+    html += '</div>';
+
+    if (todayOverride && todayOverride.mode==='no-lift'){
+      html += '<div class="card accent-charcoal"><h3>No Lift Today</h3><p class="small" style="margin-top:6px;">'+todayOverride.label+'. No gym today &mdash; rest, or focus on swim/dryland instead.</p></div>';
+    } else if (todayOverride && todayOverride.mode==='modified'){
+      html += '<div class="card accent-red"><h3>Modified Workout</h3><p class="small" style="margin-top:6px;">'+todayOverride.label+'. The normal Phase '+state.workoutPhase+' workout is on hold this week &mdash; check with your coach for what to do today.</p></div>';
+    } else {
+      day.exercises.forEach(function(ex, idx){
+        if (ex.type==='sets') html += renderSetsExercise(ex, idx);
+        else if (ex.type==='superset') html += renderSupersetExercise(ex);
+        else if (ex.type==='contrast') html += renderContrastExercise(ex);
+      });
+    }
+
+    if (!todayOverride || todayOverride.mode!=='no-lift'){
+      html += '<button class="complete-btn" id="complete-btn" onclick="toggleComplete()">Mark Workout Complete</button>';
+      html += '<div id="feel-checkin" style="display:none; margin-top:12px;">';
+      html += '<div class="card"><h3 style="text-align:center;">How Did That Workout Feel?</h3>';
+      html += '<div style="display:flex; gap:8px; margin-top:10px;">';
+      html += '<button class="feel-btn" data-feel="good" onclick="recordFeel(\'good\')">\uD83D\uDFE2 GOOD<span>Feel good, ready for practice</span></button>';
+      html += '<button class="feel-btn" data-feel="tough" onclick="recordFeel(\'tough\')">\uD83D\uDFE1 TOUGH<span>Tired but okay</span></button>';
+      html += '<button class="feel-btn" data-feel="too-much" onclick="recordFeel(\'too-much\')">\uD83D\uDD34 TOO MUCH<span>Unusually fatigued/sore</span></button>';
+      html += '</div><p class="small" id="feel-status" style="margin-top:8px; text-align:center;"></p></div></div>';
+    }
+    document.getElementById('workout-content').innerHTML = html;
+  }
+
+  window.toggleComplete = function(){
+    var btn = document.getElementById('complete-btn');
+    var checkin = document.getElementById('feel-checkin');
+    if (btn.classList.contains('done')){
+      btn.classList.remove('done'); btn.textContent='Mark Workout Complete';
+      if (checkin) checkin.style.display='none';
+    } else {
+      btn.classList.add('done'); btn.textContent='\u2713 Workout Complete';
+      if (checkin) checkin.style.display='block';
+    }
+  };
+
+  function collectLoggedSets(){
+    var rows = [];
+    document.querySelectorAll('#workout-content [data-exercise]').forEach(function(exEl){
+      var exName = exEl.getAttribute('data-exercise');
+      exEl.querySelectorAll('[data-set]').forEach(function(setEl){
+        var setNum = parseInt(setEl.getAttribute('data-set'));
+        var weightEl = setEl.querySelector('.log-weight');
+        var repsEl = setEl.querySelector('.log-reps');
+        var doneEl = setEl.querySelector('.log-done');
+        var weight = weightEl ? weightEl.value : null;
+        var reps = repsEl ? repsEl.value : null;
+        var done = doneEl ? doneEl.checked : false;
+        // Only save a row if something was actually entered or checked off
+        if (weight || reps || done){
+          rows.push({ exercise: exName, set_number: setNum, reps: reps || null, weight: weight || null, assistance: null });
+        }
+      });
+    });
+    return rows;
+  }
+
+  async function saveWorkoutToSupabase(feel){
+    if (!auth.athleteId){
+      var status = document.getElementById('feel-status');
+      if (status) status.textContent += ' (Signed in as coach — not saved as a logged workout.)';
+      return;
+    }
+    var today = todayMid();
+    var isoDate = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+    var day = CONFIG.program[state.workoutPhase] && CONFIG.program[state.workoutPhase][state.workoutDay];
+    var wRes = await sb.from('workouts').insert({
+      athlete_id: auth.athleteId,
+      workout_type: state.workoutDay,
+      workout_label: day ? day.label : '',
+      phase: state.workoutPhase,
+      workout_date: isoDate,
+      completed: true,
+      readiness: { feel: feel }
+    }).select().single();
+
+    var status = document.getElementById('feel-status');
+    if (wRes.error){ if (status) status.textContent = 'Could not save to History: ' + wRes.error.message; return; }
+
+    var sets = collectLoggedSets();
+    if (sets.length){
+      var setsPayload = sets.map(function(s){ return Object.assign({workout_id: wRes.data.id}, s); });
+      var sRes = await sb.from('workout_sets').insert(setsPayload);
+      if (sRes.error){ if (status) status.textContent = 'Workout saved, but sets failed to save: ' + sRes.error.message; return; }
+    }
+    if (status) status.textContent = (status.textContent||'') + ' Saved to History.';
+  }
+
+  window.recordFeel = function(feel){
+    document.querySelectorAll('.feel-btn').forEach(function(b){ b.classList.remove('selected'); });
+    var btn = document.querySelector('.feel-btn[data-feel="'+feel+'"]');
+    if (btn) btn.classList.add('selected');
+    var today = todayMid();
+    workoutLog.unshift({date: fmtShort(today), phase: state.workoutPhase, day: DAY_NAMES[state.workoutDay], feel: feel});
+    var labelMap = {good:'Logged: Good \uD83D\uDFE2', tough:'Logged: Tough \uD83D\uDFE1', 'too-much':'Logged: Too Much \uD83D\uDD34 — worth mentioning to your coach.'};
+    var status = document.getElementById('feel-status');
+    if (status) status.textContent = labelMap[feel];
+    saveWorkoutToSupabase(feel);
+  };
+
+
+  // ---------------- CALENDAR ----------------
+  var DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  function calMin(){ return new Date(2026,8,1); }
+  function calMax(){ return new Date(2027,2,1); }
+
+  function initCalCursor(){
+    var t = todayMid();
+    if (t < calMin()) state.calCursor = new Date(calMin());
+    else if (t > calMax()) state.calCursor = new Date(calMax());
+    else state.calCursor = new Date(t.getFullYear(), t.getMonth(), 1);
+  }
+
+  function renderCalendar(){
+    if (!state.calCursor) initCalCursor();
+    var row = document.getElementById('cal-dow-row');
+    if (!row.innerHTML) row.innerHTML = DOW.map(function(d){ return '<div class="cal-dow">'+d+'</div>'; }).join('');
+
+    var year = state.calCursor.getFullYear(), month = state.calCursor.getMonth();
+    document.getElementById('cal-label').textContent = state.calCursor.toLocaleDateString('en-US',{month:'long', year:'numeric'});
+    document.getElementById('cal-prev').disabled = (year===calMin().getFullYear() && month===calMin().getMonth());
+    document.getElementById('cal-next').disabled = (year===calMax().getFullYear() && month===calMax().getMonth());
+
+    var firstDow = new Date(year, month, 1).getDay();
+    var daysInMonth = new Date(year, month+1, 0).getDate();
+    var today = todayMid();
+
+    var html = '';
+    for (var i=0;i<firstDow;i++) html += '<div class="cal-cell blank"></div>';
+    for (var day=1; day<=daysInMonth; day++){
+      var d = new Date(year, month, day);
+      var iso = year+'-'+String(month+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+      var cls = 'cal-cell' + (sameDay(d,today) ? ' is-today' : '');
+      html += '<div class="'+cls+'" onclick="calSelectDate(\''+iso+'\')"><div class="cal-daynum">'+day+'</div>';
+      var pb = getPhaseBlock(d);
+      if (pb && d.getTime()===parseDate(pb.start).getTime()) html += '<span class="cal-pill phase">P'+pb.phase+' Starts</span>';
+      var meet = getMeet(d);
+      if (meet) html += '<span class="cal-pill meet">'+meet.label+'</span>';
+      else { var tp = getTaper(d); if (tp) html += '<span class="cal-pill taper">Taper</span>'; }
+      if (isLiftDate(d)){
+        var ov = getLiftOverride(d);
+        if (ov && ov.mode==='no-lift') html += '<span class="cal-pill nolift">No Lift</span>';
+        else if (ov && ov.mode==='modified') html += '<span class="cal-pill modified">Modified</span>';
+        else html += '<span class="cal-pill lift">Lift</span>';
+      }
+      html += '</div>';
+    }
+    document.getElementById('cal-grid').innerHTML = html;
+  }
+
+  window.calShift = function(dir){
+    var nm = new Date(state.calCursor.getFullYear(), state.calCursor.getMonth()+dir, 1);
+    if (nm < calMin() || nm > calMax()) return;
+    state.calCursor = nm;
+    renderCalendar();
+  };
+
+  window.calSelectDate = function(iso){
+    document.querySelectorAll('.cal-cell').forEach(function(c){ c.classList.remove('is-selected'); });
+    event.currentTarget.classList.add('is-selected');
+    var d = parseDate(iso);
+    var pb = getPhaseBlock(d);
+    var meet = getMeet(d);
+    var taper = getTaper(d);
+    var lift = isLiftDate(d);
+    var override = lift ? getLiftOverride(d) : null;
+    var html = '<h3>'+fmtLong(d)+'</h3>';
+    html += '<p class="small" style="margin-top:6px;"><strong>Phase:</strong> '+(pb ? pb.label : 'Not in season') + '</p>';
+    var liftText;
+    if (!lift) liftText = 'No — not a lift day';
+    else if (override && override.mode==='no-lift') liftText = 'No Lift — ' + override.label;
+    else if (override && override.mode==='modified') liftText = 'Modified Workout — ' + override.label;
+    else liftText = 'Yes — ' + (pb ? 'Phase '+pb.phase : '');
+    html += '<p class="small"><strong>Lifting:</strong> '+liftText+'</p>';
+    if (meet) html += '<p class="small"><strong>Meet:</strong> '+meet.label+'</p>';
+    if (taper) html += '<p class="small"><strong>Taper:</strong> '+taper.label+' — keep lifting light</p>';
+    if (!meet && !taper && !override) html += '<p class="small">Normal training day.</p>';
+    document.getElementById('cal-detail').innerHTML = html;
+  };
+
+  // ---------------- PROGRESS ----------------
+  var progLifts = ['Trap Bar Deadlift','Back Squat','Weighted Pull-Up','Dumbbell Chest Press','Weighted Step-Up','Dumbbell RDL','Jump / Power (optional)'];
+  function renderProgress(){
+    var html = '';
+    progLifts.forEach(function(name, i){
+      html += '<div class="card accent-red">';
+      html += '<h3>'+name+'</h3>';
+      html += '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;">';
+      html += '<div><label class="field-label">Starting</label><input class="field prog-input" data-idx="'+i+'" data-role="start" placeholder="e.g. 135"></div>';
+      html += '<div><label class="field-label">Current</label><input class="field prog-input" data-idx="'+i+'" data-role="current" placeholder="e.g. 155"></div>';
+      html += '</div>';
+      html += '<div class="prog-bar-track"><div class="prog-bar-fill" id="prog-bar-'+i+'" style="width:0%;"></div></div>';
+      html += '<div class="prog-nums"><span>Start</span><span id="prog-delta-'+i+'"></span></div>';
+      html += '</div>';
+    });
+    if (workoutLog.length){
+      var labelMap = {good:'\uD83D\uDFE2 Good', tough:'\uD83D\uDFE1 Tough', 'too-much':'\uD83D\uDD34 Too Much'};
+      html += '<div class="card accent-charcoal" style="grid-column:1 / -1;"><h3>Recent Check-Ins</h3>';
+      workoutLog.slice(0,10).forEach(function(entry){
+        html += '<p class="small" style="margin-top:6px;">'+entry.date+' &middot; Phase '+entry.phase+' '+entry.day+' &mdash; '+(labelMap[entry.feel]||entry.feel)+'</p>';
+      });
+      html += '<p class="small" style="margin-top:8px; color:var(--slate-light);">This list is for this browsing session only &mdash; it clears on reload.</p></div>';
+    }
+    document.getElementById('progress-grid').innerHTML = html;
+    document.querySelectorAll('.prog-input').forEach(function(inp){
+      inp.addEventListener('input', updateProgBar);
+    });
+  }
+  function updateProgBar(){
+    var idx = this.getAttribute('data-idx');
+    var startEl = document.querySelector('.prog-input[data-idx="'+idx+'"][data-role="start"]');
+    var curEl = document.querySelector('.prog-input[data-idx="'+idx+'"][data-role="current"]');
+    var start = parseFloat(startEl.value), cur = parseFloat(curEl.value);
+    var bar = document.getElementById('prog-bar-'+idx);
+    var delta = document.getElementById('prog-delta-'+idx);
+    if (isNaN(start) || isNaN(cur) || start<=0){ bar.style.width='0%'; delta.textContent=''; return; }
+    var target = start*1.25;
+    var pct = Math.min(100, Math.max(0, ((cur-start)/(target-start))*100));
+    bar.style.width = pct + '%';
+    var diff = cur-start;
+    delta.textContent = (diff>=0?'+':'') + diff.toFixed(1) + ' (' + (diff/start*100).toFixed(0) + '%)';
+  }
+
+  // ---------------- HISTORY (Supabase) ----------------
+  async function renderHistory(){
+    var statusEl = document.getElementById('history-status');
+    var listEl = document.getElementById('history-list');
+    statusEl.style.display = 'block';
+    statusEl.innerHTML = '<p class="small">Loading history\u2026</p>';
+    listEl.innerHTML = '';
+
+    var query = sb.from('workouts').select('id,workout_type,workout_label,phase,workout_date,readiness,notes').order('workout_date', {ascending:false}).order('created_at', {ascending:false});
+    if (auth.role !== 'coach') query = query.eq('athlete_id', auth.athleteId);
+    var res = await query;
+    if (res.error){ statusEl.innerHTML = '<p class="small">Could not load history: '+res.error.message+'</p>'; return; }
+    if (!res.data.length){ statusEl.innerHTML = '<p class="small">No workouts saved yet. Complete one and it will show up here.</p>'; return; }
+    statusEl.style.display = 'none';
+
+    var html = '';
+    res.data.forEach(function(w){
+      var feelMap = {good:'\uD83D\uDFE2 Good', tough:'\uD83D\uDFE1 Tough', 'too-much':'\uD83D\uDD34 Too Much'};
+      var feel = w.readiness && w.readiness.feel ? feelMap[w.readiness.feel] : '';
+      html += '<div class="card accent-red" style="margin-bottom:10px; cursor:pointer;" onclick="toggleHistoryDetail(\''+w.id+'\')">';
+      html += '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">';
+      html += '<h3>'+fmtShort(parseDate(w.workout_date))+' &mdash; '+(w.workout_label||w.workout_type)+'</h3>';
+      html += '<span class="tag red">Phase '+w.phase+'</span></div>';
+      html += '<p class="small" style="margin-top:4px;">'+feel+'</p>';
+      html += '<div id="hist-detail-'+w.id+'" style="display:none; margin-top:10px;"><p class="small">Loading sets\u2026</p></div>';
+      html += '</div>';
+    });
+    listEl.innerHTML = html;
+  }
+
+  var historyDetailLoaded = {};
+  window.toggleHistoryDetail = async function(workoutId){
+    var el = document.getElementById('hist-detail-'+workoutId);
+    if (!el) return;
+    var isOpen = el.style.display === 'block';
+    el.style.display = isOpen ? 'none' : 'block';
+    if (isOpen || historyDetailLoaded[workoutId]) return;
+    historyDetailLoaded[workoutId] = true;
+    var res = await sb.from('workout_sets').select('exercise,set_number,reps,weight,assistance').eq('workout_id', workoutId).order('set_number', {ascending:true});
+    if (res.error){ el.innerHTML = '<p class="small">Could not load sets: '+res.error.message+'</p>'; return; }
+    if (!res.data.length){ el.innerHTML = '<p class="small">No individual sets were logged for this workout.</p>'; return; }
+    var byExercise = {};
+    res.data.forEach(function(s){
+      if (!byExercise[s.exercise]) byExercise[s.exercise] = [];
+      byExercise[s.exercise].push(s);
+    });
+    var html = '';
+    Object.keys(byExercise).forEach(function(exName){
+      html += '<p class="small" style="font-weight:800; color:var(--charcoal); margin-top:8px;">'+exName+'</p>';
+      byExercise[exName].forEach(function(s){
+        var line = 'Set '+s.set_number+': ' + (s.weight ? s.weight+' &times; ' : '') + (s.reps || '\u2014');
+        if (s.assistance) line += ' @ '+s.assistance+' assist';
+        html += '<p class="small" style="margin-left:8px;">'+line+'</p>';
+      });
+    });
+    el.innerHTML = html;
+  };
+
+
+  window.openCoachPanel = function(){
+    document.getElementById('coach-json').value = JSON.stringify(CONFIG, null, 2);
+    document.getElementById('coach-panel').classList.add('open');
+    document.getElementById('coach-status').textContent = '';
+  };
+  window.closeCoachPanel = function(){ document.getElementById('coach-panel').classList.remove('open'); };
+  window.applyCoachEdits = function(){
+    try{
+      var parsed = JSON.parse(document.getElementById('coach-json').value);
+      CONFIG = parsed;
+      renderHome();
+      if (state.workoutPhase) renderWorkout();
+      renderCalendar();
+      document.getElementById('coach-status').textContent = 'Applied — live preview updated. Remember: this resets on reload unless saved into the file.';
+    }catch(e){
+      document.getElementById('coach-status').textContent = 'Could not parse that JSON: ' + e.message;
+    }
+  };
+  window.copyCoachJson = function(){
+    var ta = document.getElementById('coach-json');
+    ta.select();
+    document.execCommand('copy');
+    document.getElementById('coach-status').textContent = 'Copied to clipboard.';
+  };
+
+  // ---------------- INIT ----------------
+  function initDashboard(){
+    renderHome();
+    var todayBlock = getPhaseBlock(todayMid());
+    selectPhase(todayBlock ? todayBlock.phase : 1);
+    var wd = todayMid().getDay();
+    selectDay(DAY_KEYS[wd] || 'mon');
+  }
+
+  (async function checkExistingSession(){
+    var sessionRes = await sb.auth.getSession();
+    if (sessionRes.data.session){
+      await loadProfileAndStart();
+    }
+    // else: login-panel stays visible (it's shown by default in the HTML)
+  })();
+})();
+</script>
+</body>
+</html>
