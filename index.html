@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, viewport-fit=cover">
 <title>Jayce's Training</title>
-<meta name="apple-mobile-web-app-capable" content="yes">github.com/crowdeba/jayce-trainingc
+<meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Jayce's Training">
 <meta name="mobile-web-app-capable" content="yes">
@@ -162,6 +162,7 @@
       <button data-view="history" onclick="showView('history')">History</button>
     </nav>
     <button class="coach-link" onclick="openCoachPanel()">Coach Mode</button>
+      <button class="coach-link" onclick="doSignOut()">Sign Out</button>
   </div>
 </div>
 
@@ -240,7 +241,6 @@
       <div class="card accent-charcoal"><h3>Don't Chase Soreness</h3><p class="small" style="margin-top:6px;">The goal is to get stronger and more explosive, not to be extremely sore.</p></div>
       <div class="card accent-red"><h3>Explosive = Explosive</h3><p class="small" style="margin-top:6px;">For jumps and other power exercises, stop if speed, jump height, or landing quality starts to decline.</p></div>
       <div class="card accent-charcoal"><h3>50&ndash;60 Minutes</h3><p class="small" style="margin-top:6px;">The goal is to get quality work done without turning lifting into another long training session.</p></div>
-      <div class="card accent-red"><h3>Warm Up First</h3><p class="small" style="margin-top:6px;">Stretch and warm up before lifting, every time. Prehab is better than rehab &mdash; a few minutes now protects you from missing weeks later.</p></div>
     </div>
     <div class="card accent-red" style="margin-top:14px;">
       <h3>Listen To Your Body</h3>
@@ -313,7 +313,6 @@ var CONFIG = {
     {start:"2026-10-17", end:"2026-10-17", label:"Tri Meet"},
     {start:"2026-10-23", end:"2026-10-25", label:"WTRC Meet"},
     {start:"2026-11-06", end:"2026-11-08", label:"Fort Wayne Invite"},
-     {start:"2026-11-13", end:"2026-11-15", label:"Mason Invite"},
     {start:"2026-12-11", end:"2026-12-13", label:"Midseason Meet"},
     {start:"2027-02-12", end:"2027-02-12", label:"HS Sectionals"},
     {start:"2027-02-20", end:"2027-02-20", label:"HS Districts"},
@@ -343,11 +342,13 @@ var CONFIG = {
     {start:"2026-12-14", end:"2026-12-14", mode:"no-lift", label:"No Lift"},
     {start:"2027-01-01", end:"2027-01-01", mode:"no-lift", label:"No Lift — New Year's Day"},
     {start:"2027-02-10", end:"2027-02-28", mode:"modified", label:"HS Championship Taper — plan TBD"},
+    {start:"2027-03-03", end:"2027-03-03", mode:"no-lift", label:"No Lift — Senior Champs"},
     {start:"2027-03-05", end:"2027-03-05", mode:"no-lift", label:"No Lift — Senior Champs"},
     {start:"2027-03-15", end:"2027-03-19", mode:"no-lift", label:"No Lift — Sectionals Week"}
   ],
 
   hsChampionships: "HS Sectionals Feb 12, Districts Feb 20, States Feb 26–27, 2027",
+  athleteName: "Jayce",
 
   // Each day: array of exercises. type "sets" = normal exercise with N sets.
   // type "contrast" = heavy lift + explosive jump pair. type "superset" = two moves back to back.
@@ -355,7 +356,7 @@ var CONFIG = {
     1: {
       mon: {label:"Lower + Pull", exercises:[
         {type:"sets", name:"Box Jump", sets:["3","3","3"], rest:"60-90 sec", cue:"Jump as high as possible. Land softly and reset completely between reps. Stop if jump height or landing quality drops."},
-        {type:"sets", name:"Goblet Squat", sets:["8","8","8"], rest:"2 min", cue:"Hold the weight at your chest, sit down between your hips, chest up."},
+        {type:"sets", name:"Trap Bar Deadlift", sets:["8","8","8"], rest:"2 min", cue:"Own the setup. Drive through the full foot."},
         {type:"sets", name:"Weighted Step-Up", sets:["8/leg","8/leg","8/leg"], rest:"90 sec", cue:"Control the step down — that's where step-ups get you."},
         {type:"sets", name:"Pull-Up", sets:["8-10","8-10","8-10"], rest:"90 sec", cue:"Full range, controlled tempo."},
         {type:"sets", name:"Chest-Supported / Angled Seated Row", sets:["10","10","10"], rest:"75-90 sec", cue:"Squeeze the shoulder blades together at the top."},
@@ -379,7 +380,7 @@ var CONFIG = {
     },
     2: {
       mon: {label:"Lower + Pull", exercises:[
-        {type:"sets", name:"Goblet Squat", sets:["5-6","5-6","5-6","5-6"], rest:"2.5 min", cue:"Heavier — full depth every rep, controlled tempo."},
+        {type:"sets", name:"Trap Bar Deadlift", sets:["5-6","5-6","5-6","5-6"], rest:"2.5 min", cue:"Heavier — pull the slack out of the bar first, then pull up."},
         {type:"sets", name:"Weighted Step-Up", sets:["6-8/leg","6-8/leg","6-8/leg"], rest:"2 min", cue:"Added load vs. Phase 1 — control the step down."},
         {type:"sets", name:"Weighted Pull-Up", sets:["5","5","5","5"], rest:"2 min", cue:"Add load once bodyweight x8-10 felt solid."},
         {type:"sets", name:"Chest-Supported / Angled Seated Row", sets:["8","8","8"], rest:"90 sec", cue:"Controlled, no momentum."}
@@ -400,7 +401,7 @@ var CONFIG = {
     },
     3: {
       mon: {label:"Lower + Pull", exercises:[
-        {type:"contrast", name:"Goblet Squat &rarr; Box Jump", rounds:3, liftReps:"2-3", jumpReps:"2-3", restBetween:"20-30 sec", restRounds:"2-3 min", cue:"Heavy pull, short rest, then max-effort box jumps. Quality over quantity — stop if jump height or landing gets sloppy."},
+        {type:"contrast", name:"Trap Bar Deadlift &rarr; Box Jump", rounds:3, liftReps:"2-3", jumpReps:"2-3", restBetween:"20-30 sec", restRounds:"2-3 min", cue:"Heavy pull, short rest, then max-effort box jumps. Quality over quantity — stop if jump height or landing gets sloppy."},
         {type:"sets", name:"Weighted Pull-Up", sets:["5","5","5"], rest:"2 min", cue:"Explosive pull, controlled descent."},
         {type:"sets", name:"Chest-Supported Row", sets:["8","8"], rest:"90 sec", cue:"Maintenance volume only."},
         {type:"sets", name:"Bicep Curls", sets:["5-8","5-8"], rest:"45 sec", cue:"Maintenance."}
@@ -443,6 +444,11 @@ var CONFIG = {
     await loadProfileAndStart();
   };
 
+  window.doSignOut = async function(){
+    await sb.auth.signOut();
+    location.reload();
+  };
+
   async function loadProfileAndStart(){
     var status = document.getElementById('login-status');
     var sessionRes = await sb.auth.getSession();
@@ -451,7 +457,8 @@ var CONFIG = {
     auth.user = user;
     var profRes = await sb.from('profiles').select('role,athlete_id').eq('id', user.id).single();
     if (profRes.error || !profRes.data){
-      if (status) status.textContent = 'Signed in, but no profile is set up for this account yet. Ask your coach to finish the Supabase setup step.';
+      var detail = profRes.error ? (profRes.error.message + ' (code: ' + (profRes.error.code||'none') + ')') : 'no matching row found';
+      if (status) status.textContent = 'Signed in (user id: ' + user.id + '), but profile lookup failed: ' + detail;
       return;
     }
     auth.role = profRes.data.role;
@@ -870,6 +877,14 @@ var CONFIG = {
   }
 
   // ---------------- HISTORY (Supabase) ----------------
+  var siteAthleteId = null;
+  async function resolveSiteAthleteId(){
+    if (siteAthleteId) return siteAthleteId;
+    var res = await sb.from('athletes').select('id').eq('name', CONFIG.athleteName).single();
+    if (!res.error && res.data) siteAthleteId = res.data.id;
+    return siteAthleteId;
+  }
+
   async function renderHistory(){
     var statusEl = document.getElementById('history-status');
     var listEl = document.getElementById('history-list');
@@ -877,8 +892,10 @@ var CONFIG = {
     statusEl.innerHTML = '<p class="small">Loading history\u2026</p>';
     listEl.innerHTML = '';
 
-    var query = sb.from('workouts').select('id,workout_type,workout_label,phase,workout_date,readiness,notes').order('workout_date', {ascending:false}).order('created_at', {ascending:false});
-    if (auth.role !== 'coach') query = query.eq('athlete_id', auth.athleteId);
+    var scopedId = await resolveSiteAthleteId();
+    if (!scopedId){ statusEl.innerHTML = '<p class="small">Could not find this athlete record yet — check Supabase setup.</p>'; return; }
+
+    var query = sb.from('workouts').select('id,workout_type,workout_label,phase,workout_date,readiness,notes').eq('athlete_id', scopedId).order('workout_date', {ascending:false}).order('created_at', {ascending:false});
     var res = await query;
     if (res.error){ statusEl.innerHTML = '<p class="small">Could not load history: '+res.error.message+'</p>'; return; }
     if (!res.data.length){ statusEl.innerHTML = '<p class="small">No workouts saved yet. Complete one and it will show up here.</p>'; return; }
