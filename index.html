@@ -265,7 +265,7 @@
 <div id="login-panel" style="position:fixed; inset:0; background:var(--charcoal); z-index:200; display:flex; align-items:center; justify-content:center; padding:20px;">
   <div class="card" style="max-width:380px; width:100%;">
     <h3>Sign In</h3>
-    <p class="small" style="margin-top:6px;">Jayce and Coach each sign in with their own account to see Jayce's training data.</p>
+    <p class="small" id="login-subtitle" style="margin-top:6px;">Sign in with your own account.</p>
     <label class="field-label" style="margin-top:12px;">Email</label>
     <input class="field" id="login-email" type="email" placeholder="you@example.com">
     <label class="field-label" style="margin-top:10px;">Password</label>
@@ -359,6 +359,7 @@ var CONFIG = {
         {type:"sets", name:"Trap Bar Deadlift", sets:["8","8","8"], rest:"2 min", cue:"Own the setup. Drive through the full foot."},
         {type:"sets", name:"Weighted Step-Up", sets:["8/leg","8/leg","8/leg"], rest:"90 sec", cue:"Control the step down — that's where step-ups get you."},
         {type:"sets", name:"Pull-Up", sets:["8-10","8-10","8-10"], rest:"90 sec", cue:"Full range, controlled tempo."},
+        {type:"sets", name:"Lat Pulldown", sets:["10","10","10"], rest:"75 sec", cue:"Full range, controlled — a different pulling angle than pull-ups, real lat volume."},
         {type:"sets", name:"Chest-Supported / Angled Seated Row", sets:["10","10","10"], rest:"75-90 sec", cue:"Squeeze the shoulder blades together at the top."},
         {type:"sets", name:"Bird Dog / Anti-Rotation Press", sets:["10/side","10/side","10/side"], rest:"60 sec", cue:"Core stability — move slow, stay square."}
       ]},
@@ -370,12 +371,13 @@ var CONFIG = {
         {type:"sets", name:"DB Lateral Raise", sets:["10","10","10"], rest:"60 sec", cue:"Light weight, lead with your elbows, don't shrug."}
       ]},
       fri: {label:"Full Body + Posterior Chain", exercises:[
-        {type:"sets", name:"Goblet Squat", sets:["8","8","8"], rest:"2 min", cue:"Full depth, controlled tempo."},
-        {type:"sets", name:"Dumbbell RDL", sets:["8-10","8-10","8-10"], rest:"90 sec", cue:"Push your hips back, feel your hamstrings load. NO SLACK"},
+        {type:"sets", name:"Goblet Squat", sets:["10","10","10"], rest:"2 min", cue:"Full depth, controlled tempo."},
+        {type:"sets", name:"Dumbbell RDL", sets:["8-10","8-10","8-10"], rest:"90 sec", cue:"Push your hips back, feel your hamstrings load."},
         {type:"sets", name:"Seated Row", sets:["10","10","10"], rest:"75 sec", cue:"Pause 1 second at the squeeze."},
         {type:"sets", name:"Bent-Over Lateral Raise", sets:["12-15","12-15","12-15"], rest:"60 sec", cue:"Rear delts — light weight, strict form. Skip the 3rd set if the first two felt like plenty."},
         {type:"sets", name:"Pallof Press", sets:["10/side","10/side","10/side"], rest:"45 sec", cue:"Resist rotation, slow and controlled."},
-        {type:"sets", name:"Bicep Curls", sets:["10","10","10"], rest:"60 sec", cue:"Controlled — no swinging the weight."}
+        {type:"sets", name:"Hip Abductor / Adductor", sets:["12","12"], rest:"45 sec", cue:"Controlled, moderate weight — this hip strength feeds directly into your breaststroke kick."},
+        {type:"sets", name:"Bicep Curls", sets:["10","10","10"], rest:"60 sec", cue:"Controlled — no swinging the weight. 45-degree bench if available."}
       ]}
     },
     2: {
@@ -383,6 +385,7 @@ var CONFIG = {
         {type:"sets", name:"Trap Bar Deadlift", sets:["5-6","5-6","5-6","5-6"], rest:"2.5 min", cue:"Heavier — pull the slack out of the bar first, then pull up."},
         {type:"sets", name:"Weighted Step-Up", sets:["6-8/leg","6-8/leg","6-8/leg"], rest:"2 min", cue:"Added load vs. Phase 1 — control the step down."},
         {type:"sets", name:"Weighted Pull-Up", sets:["5","5","5","5"], rest:"2 min", cue:"Add load once bodyweight x8-10 felt solid."},
+        {type:"sets", name:"Lat Pulldown", sets:["8","8","8"], rest:"75 sec", cue:"Heavier than Phase 1, controlled — real lat volume alongside your weighted pull-ups."},
         {type:"sets", name:"Chest-Supported / Angled Seated Row", sets:["8","8","8"], rest:"90 sec", cue:"Controlled, no momentum."}
       ]},
       wed: {label:"Upper + Shoulder Health", exercises:[
@@ -396,6 +399,7 @@ var CONFIG = {
         {type:"sets", name:"Goblet Squat", sets:["5-6","5-6","5-6"], rest:"2 min", cue:"Heavier, strict depth and position."},
         {type:"superset", name:"Hamstring Curl + Leg Extension Superset", rounds:3, rest:"2 min", cue:"Straight from curls into extensions, no rest between the two — rest after each round."},
         {type:"sets", name:"Seated Row", sets:["8","8","8"], rest:"90 sec", cue:"Add load vs. Phase 1."},
+        {type:"sets", name:"Hip Abductor / Adductor", sets:["10","10"], rest:"45 sec", cue:"Controlled, moderate weight — breaststroke-specific hip strength."},
         {type:"sets", name:"Bicep Curls", sets:["10","10"], rest:"45 sec", cue:"Controlled arm work."}
       ]}
     },
@@ -433,6 +437,8 @@ var CONFIG = {
   var SUPABASE_ANON_KEY = "sb_publishable_v83BXXAIW3UoMrndPi4tCw_cMoaPbnR";
   var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   var auth = { user:null, role:null, athleteId:null };
+  var subtitleEl = document.getElementById('login-subtitle');
+  if (subtitleEl && CONFIG.athleteName) subtitleEl.textContent = CONFIG.athleteName + ' and Coach each sign in with their own account.';
 
   window.doSignIn = async function(){
     var email = document.getElementById('login-email').value.trim();
@@ -834,7 +840,7 @@ var CONFIG = {
   };
 
   // ---------------- PROGRESS ----------------
-  var progLifts = ['Trap Bar Deadlift','Back Squat','Weighted Pull-Up','Dumbbell Chest Press','Weighted Step-Up','Dumbbell RDL','Jump / Power (optional)'];
+  var progLifts = ['Trap Bar Deadlift','Goblet Squat','Weighted Pull-Up','Dumbbell Chest Press','Weighted Step-Up','Dumbbell RDL','Jump / Power (optional)'];
   function renderProgress(){
     var html = '';
     progLifts.forEach(function(name, i){
