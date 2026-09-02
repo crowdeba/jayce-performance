@@ -914,8 +914,9 @@ var CONFIG = {
       html += '<div class="card accent-red" style="margin-bottom:10px; cursor:pointer;" onclick="toggleHistoryDetail(\''+w.id+'\')">';
       html += '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">';
       html += '<h3>'+fmtShort(parseDate(w.workout_date))+' &mdash; '+(w.workout_label||w.workout_type)+'</h3>';
-      html += '<span class="tag red">Phase '+w.phase+'</span></div>';
+      html += (w.phase ? '<span class="tag red">Phase '+w.phase+'</span>' : '') + '</div>';
       html += '<p class="small" style="margin-top:4px;">'+feel+'</p>';
+      if (w.notes) html += '<p class="small" style="margin-top:6px; white-space:pre-wrap;">'+w.notes+'</p>';
       html += '<div id="hist-detail-'+w.id+'" style="display:none; margin-top:10px;"><p class="small">Loading sets\u2026</p></div>';
       html += '</div>';
     });
