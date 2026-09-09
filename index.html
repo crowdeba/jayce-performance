@@ -170,6 +170,16 @@
 
   <!-- ===================== HOME ===================== -->
   <div class="view active" id="view-home">
+    <div id="coach-message-banner" style="display:none; margin-bottom:14px;"></div>
+
+    <div class="card accent-charcoal" style="margin-bottom:14px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="togglePastMessages()">
+        <h3 style="margin:0;">Messages From Coach</h3>
+        <span class="small" id="past-messages-toggle-label">Show</span>
+      </div>
+      <div id="past-messages-list" style="display:none; margin-top:10px;"><p class="small">Loading...</p></div>
+    </div>
+
     <div class="hero">
       <span class="eyebrow" style="color:#FF6B7A;">Jayce's Training</span>
       <h2 id="home-phase">Current Phase: Loading...</h2>
@@ -534,7 +544,59 @@ var CONFIG = {
   };
 
   // ---------------- HOME ----------------
+  // ---------------- COACH MESSAGES ----------------
+  function dismissedMessageKey(){
+    return 'dismissed_msg_' + (auth.athleteId || 'anon');
+  }
+
+  async function renderCoachMessageBanner(){
+    var el = document.getElementById('coach-message-banner');
+    if (!el) return;
+    var res = await sb.from('coach_messages').select('id,message,created_at').order('created_at', {ascending:false}).limit(1);
+    if (res.error || !res.data || !res.data.length) return;
+    var latest = res.data[0];
+    var dismissedId = null;
+    try { dismissedId = localStorage.getItem(dismissedMessageKey()); } catch(e){}
+    if (String(dismissedId) === String(latest.id)) return;
+
+    el.innerHTML =
+      '<div class="card accent-red" style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">' +
+      '<p class="small" style="margin:0;"><strong>Coach:</strong> ' + latest.message + '</p>' +
+      '<button class="coach-link" style="flex-shrink:0;" onclick="dismissCoachMessage(\'' + latest.id + '\')">Dismiss</button>' +
+      '</div>';
+    el.style.display = 'block';
+  }
+
+  window.dismissCoachMessage = function(id){
+    try { localStorage.setItem(dismissedMessageKey(), String(id)); } catch(e){}
+    var el = document.getElementById('coach-message-banner');
+    if (el) el.style.display = 'none';
+  };
+
+  var pastMessagesLoaded = false;
+  window.togglePastMessages = async function(){
+    var list = document.getElementById('past-messages-list');
+    var label = document.getElementById('past-messages-toggle-label');
+    if (!list) return;
+    var showing = list.style.display !== 'none';
+    if (showing){ list.style.display = 'none'; if (label) label.textContent = 'Show'; return; }
+    list.style.display = 'block';
+    if (label) label.textContent = 'Hide';
+    if (pastMessagesLoaded) return;
+    var res = await sb.from('coach_messages').select('message,created_at').order('created_at', {ascending:false}).limit(20);
+    if (res.error){ list.innerHTML = '<p class="small">Could not load messages.</p>'; return; }
+    if (!res.data.length){ list.innerHTML = '<p class="small">No messages yet.</p>'; return; }
+    var html = '';
+    res.data.forEach(function(m){
+      var d = new Date(m.created_at);
+      html += '<div style="padding:8px 0; border-bottom:1px solid var(--line);"><p class="small" style="color:var(--slate-light); margin-bottom:2px;">' + d.toLocaleDateString() + '</p><p class="small">' + m.message + '</p></div>';
+    });
+    list.innerHTML = html;
+    pastMessagesLoaded = true;
+  };
+
   function renderHome(){
+    renderCoachMessageBanner();
     var today = todayMid();
     var block = getPhaseBlock(today);
     document.getElementById('home-phase').textContent = 'Current Phase: ' + (block ? block.label : (today < parseDate(CONFIG.seasonStart) ? 'Not Started Yet' : 'Season Complete'));
@@ -633,6 +695,105 @@ var CONFIG = {
     return h;
   }
 
+  // ---------------- AUTOSAVE ----------------
+  var AUTOSAVE_DEBOUNCE_MS = 2000;
+  var autosaveTimer = null;
+
+  function autosaveStorageKey(){
+    return 'autosave_' + (auth.athleteId || 'anon');
+  }
+  function getAutosaveRecord(){
+    try { var raw = localStorage.getItem(autosaveStorageKey()); return raw ? JSON.parse(raw) : null; } catch(e){ return null; }
+  }
+  function setAutosaveRecord(rec){
+    try { localStorage.setItem(autosaveStorageKey(), JSON.stringify(rec)); } catch(e){}
+  }
+  function clearAutosaveRecord(){
+    try { localStorage.removeItem(autosaveStorageKey()); } catch(e){}
+  }
+  function todayIso(){
+    var d = todayMid();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+
+  async function ensureInProgressWorkout(){
+    if (!auth.athleteId) return null;
+    var iso = todayIso();
+    var rec = getAutosaveRecord();
+    if (rec && rec.date===iso && rec.phase===state.workoutPhase && rec.day===state.workoutDay && rec.workoutId){
+      return rec.workoutId;
+    }
+    var dayObj = CONFIG.program[state.workoutPhase] && CONFIG.program[state.workoutPhase][state.workoutDay];
+    var wRes = await sb.from('workouts').insert({
+      athlete_id: auth.athleteId,
+      workout_type: state.workoutDay,
+      workout_label: dayObj ? dayObj.label : '',
+      phase: state.workoutPhase,
+      workout_date: iso,
+      completed: false,
+      readiness: null
+    }).select().single();
+    if (wRes.error || !wRes.data) return null;
+    setAutosaveRecord({workoutId: wRes.data.id, date: iso, phase: state.workoutPhase, day: state.workoutDay});
+    return wRes.data.id;
+  }
+
+  async function autosaveNow(){
+    if (!auth.athleteId) return;
+    var sets = collectLoggedSets();
+    if (!sets.length) return;
+    var workoutId = await ensureInProgressWorkout();
+    if (!workoutId) return;
+    await sb.from('workout_sets').delete().eq('workout_id', workoutId);
+    var payload = sets.map(function(s){ return Object.assign({workout_id: workoutId}, s); });
+    await sb.from('workout_sets').insert(payload);
+    var indicator = document.getElementById('autosave-indicator');
+    if (indicator){
+      indicator.textContent = 'Saved ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      indicator.style.opacity = '0.85';
+      setTimeout(function(){ if (indicator) indicator.style.opacity = '0.5'; }, 2500);
+    }
+  }
+
+  function scheduleAutosave(){
+    if (autosaveTimer) clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(autosaveNow, AUTOSAVE_DEBOUNCE_MS);
+  }
+
+  function attachAutosaveListeners(){
+    var container = document.getElementById('workout-content');
+    if (!container) return;
+    container.querySelectorAll('.log-weight, .log-reps, .log-assist').forEach(function(el){
+      el.addEventListener('input', scheduleAutosave);
+    });
+    container.querySelectorAll('.log-done').forEach(function(el){
+      el.addEventListener('change', scheduleAutosave);
+    });
+  }
+
+  async function restoreAutosavedInputs(){
+    if (!auth.athleteId) return;
+    var rec = getAutosaveRecord();
+    var iso = todayIso();
+    if (!rec || rec.date!==iso || rec.phase!==state.workoutPhase || rec.day!==state.workoutDay || !rec.workoutId) return;
+    var res = await sb.from('workout_sets').select('exercise,set_number,reps,weight,assistance').eq('workout_id', rec.workoutId);
+    if (res.error || !res.data || !res.data.length) return;
+    res.data.forEach(function(row){
+      var exEl = document.querySelector('#workout-content [data-exercise="'+String(row.exercise).replace(/"/g,'\\"')+'"]');
+      if (!exEl) return;
+      var setEl = exEl.querySelector('[data-set="'+row.set_number+'"]');
+      if (!setEl) return;
+      var weightEl = setEl.querySelector('.log-weight');
+      var repsEl = setEl.querySelector('.log-reps');
+      var assistEl = setEl.querySelector('.log-assist');
+      if (weightEl && row.weight!=null) weightEl.value = row.weight;
+      if (repsEl && row.reps!=null) repsEl.value = row.reps;
+      if (assistEl && row.assistance!=null) assistEl.value = row.assistance;
+    });
+    var indicator = document.getElementById('autosave-indicator');
+    if (indicator) indicator.textContent = 'Restored your progress from earlier.';
+  }
+
   function renderWorkout(){
     var day = CONFIG.program[state.workoutPhase] && CONFIG.program[state.workoutPhase][state.workoutDay];
     if (!day){ document.getElementById('workout-content').innerHTML = '<div class="card"><p class="small">No workout found.</p></div>'; return; }
@@ -658,6 +819,8 @@ var CONFIG = {
     if (isToday && !todayOverride) html += '<p class="small" style="margin-top:4px;">This is today\'s workout.</p>';
     html += '</div>';
 
+    html += '<p class="small" id="autosave-indicator" style="text-align:right; color:var(--slate-light); opacity:0.6; margin:6px 4px 0 0;">&nbsp;</p>';
+
     if (todayOverride && todayOverride.mode==='no-lift'){
       html += '<div class="card accent-charcoal"><h3>No Lift Today</h3><p class="small" style="margin-top:6px;">'+todayOverride.label+'. No gym today &mdash; rest, or focus on swim/dryland instead.</p></div>';
     } else if (todayOverride && todayOverride.mode==='modified'){
@@ -681,6 +844,8 @@ var CONFIG = {
       html += '</div><p class="small" id="feel-status" style="margin-top:8px; text-align:center;"></p></div></div>';
     }
     document.getElementById('workout-content').innerHTML = html;
+    attachAutosaveListeners();
+    restoreAutosavedInputs();
   }
 
   window.toggleComplete = function(){
@@ -717,33 +882,26 @@ var CONFIG = {
   }
 
   async function saveWorkoutToSupabase(feel){
+    var status = document.getElementById('feel-status');
     if (!auth.athleteId){
-      var status = document.getElementById('feel-status');
       if (status) status.textContent += ' (Signed in as coach — not saved as a logged workout.)';
       return;
     }
-    var today = todayMid();
-    var isoDate = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
-    var day = CONFIG.program[state.workoutPhase] && CONFIG.program[state.workoutPhase][state.workoutDay];
-    var wRes = await sb.from('workouts').insert({
-      athlete_id: auth.athleteId,
-      workout_type: state.workoutDay,
-      workout_label: day ? day.label : '',
-      phase: state.workoutPhase,
-      workout_date: isoDate,
-      completed: true,
-      readiness: { feel: feel }
-    }).select().single();
-
-    var status = document.getElementById('feel-status');
-    if (wRes.error){ if (status) status.textContent = 'Could not save to History: ' + wRes.error.message; return; }
+    var workoutId = await ensureInProgressWorkout();
+    if (!workoutId){ if (status) status.textContent = 'Could not save to History.'; return; }
 
     var sets = collectLoggedSets();
+    await sb.from('workout_sets').delete().eq('workout_id', workoutId);
     if (sets.length){
-      var setsPayload = sets.map(function(s){ return Object.assign({workout_id: wRes.data.id}, s); });
+      var setsPayload = sets.map(function(s){ return Object.assign({workout_id: workoutId}, s); });
       var sRes = await sb.from('workout_sets').insert(setsPayload);
       if (sRes.error){ if (status) status.textContent = 'Workout saved, but sets failed to save: ' + sRes.error.message; return; }
     }
+
+    var uRes = await sb.from('workouts').update({ completed: true, readiness: { feel: feel } }).eq('id', workoutId);
+    if (uRes.error){ if (status) status.textContent = 'Could not finalize save: ' + uRes.error.message; return; }
+
+    clearAutosaveRecord();
     if (status) status.textContent = (status.textContent||'') + ' Saved to History.';
   }
 
