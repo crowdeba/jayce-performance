@@ -1059,7 +1059,7 @@ var CONFIG = {
     var scopedId = await resolveSiteAthleteId();
     if (!scopedId){ statusEl.innerHTML = '<p class="small">Could not find this athlete record yet — check Supabase setup.</p>'; return; }
 
-    var query = sb.from('workouts').select('id,workout_type,workout_label,phase,workout_date,readiness,notes').eq('athlete_id', scopedId).order('workout_date', {ascending:false}).order('created_at', {ascending:false});
+    var query = sb.from('workouts').select('id,workout_type,workout_label,phase,workout_date,readiness,notes').eq('athlete_id', scopedId).eq('completed', true).order('workout_date', {ascending:false}).order('created_at', {ascending:false});
     var res = await query;
     if (res.error){ statusEl.innerHTML = '<p class="small">Could not load history: '+res.error.message+'</p>'; return; }
     if (!res.data.length){ statusEl.innerHTML = '<p class="small">No workouts saved yet. Complete one and it will show up here.</p>'; return; }
