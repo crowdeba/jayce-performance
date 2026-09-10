@@ -319,6 +319,7 @@ var CONFIG = {
   ],
 
   meets: [
+    {start:"2026-10-03", end:"2026-10-03", label:"Homecoming"},
     {start:"2026-10-04", end:"2026-10-04", label:"CAC Pentathlon"},
     {start:"2026-10-17", end:"2026-10-17", label:"Tri Meet"},
     {start:"2026-10-23", end:"2026-10-25", label:"WTRC Meet"},
@@ -661,7 +662,7 @@ var CONFIG = {
     var h = '<div class="ex-card" data-exercise="'+ex.name.replace(/"/g,'&quot;')+'">';
     h += '<div class="ex-top"><span class="ex-name">'+ex.name+'</span><span class="ex-sr">'+ex.sets.length+' &times; '+ex.sets[0]+'</span></div>';
     h += '<div class="ex-cue">Rest '+ex.rest+' &middot; '+ex.cue+'</div>';
-    h += '<div class="ex-last"><label class="field-label">Last Workout</label><input class="field" placeholder="e.g. 185 x 8 x 3"></div>';
+    h += '<div class="ex-last"><label class="field-label">Last Workout</label><input class="field last-workout-display" readonly placeholder="First time doing this one" style="background:#F5F5F5;"></div>';
     ex.sets.forEach(function(target, i){
       h += '<div class="set-row" data-set="'+(i+1)+'"><span class="set-label">Set '+(i+1)+'</span>';
       h += '<input class="field log-weight" placeholder="weight">';
@@ -723,6 +724,15 @@ var CONFIG = {
     if (rec && rec.date===iso && rec.phase===state.workoutPhase && rec.day===state.workoutDay && rec.workoutId){
       return rec.workoutId;
     }
+    var existingRes = await sb.from('workouts').select('id,completed')
+      .eq('athlete_id', auth.athleteId).eq('workout_date', iso)
+      .eq('phase', state.workoutPhase).eq('workout_type', state.workoutDay).limit(1);
+    if (!existingRes.error && existingRes.data && existingRes.data.length){
+      var existing = existingRes.data[0];
+      if (existing.completed) return null;
+      setAutosaveRecord({workoutId: existing.id, date: iso, phase: state.workoutPhase, day: state.workoutDay});
+      return existing.id;
+    }
     var dayObj = CONFIG.program[state.workoutPhase] && CONFIG.program[state.workoutPhase][state.workoutDay];
     var wRes = await sb.from('workouts').insert({
       athlete_id: auth.athleteId,
@@ -738,20 +748,33 @@ var CONFIG = {
     return wRes.data.id;
   }
 
+  var autosaveInFlight = false;
+  var autosavePending = false;
+
   async function autosaveNow(){
     if (!auth.athleteId) return;
-    var sets = collectLoggedSets();
-    if (!sets.length) return;
-    var workoutId = await ensureInProgressWorkout();
-    if (!workoutId) return;
-    await sb.from('workout_sets').delete().eq('workout_id', workoutId);
-    var payload = sets.map(function(s){ return Object.assign({workout_id: workoutId}, s); });
-    await sb.from('workout_sets').insert(payload);
-    var indicator = document.getElementById('autosave-indicator');
-    if (indicator){
-      indicator.textContent = 'Saved ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-      indicator.style.opacity = '0.85';
-      setTimeout(function(){ if (indicator) indicator.style.opacity = '0.5'; }, 2500);
+    if (autosaveInFlight){ autosavePending = true; return; }
+    autosaveInFlight = true;
+    try {
+      var sets = collectLoggedSets();
+      if (!sets.length) return;
+      var workoutId = await ensureInProgressWorkout();
+      if (!workoutId) return;
+      await sb.from('workout_sets').delete().eq('workout_id', workoutId);
+      var payload = sets.map(function(s){ return Object.assign({workout_id: workoutId}, s); });
+      await sb.from('workout_sets').insert(payload);
+      var indicator = document.getElementById('autosave-indicator');
+      if (indicator){
+        indicator.textContent = 'Saved ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        indicator.style.opacity = '0.85';
+        setTimeout(function(){ if (indicator) indicator.style.opacity = '0.5'; }, 2500);
+      }
+    } finally {
+      autosaveInFlight = false;
+      if (autosavePending){
+        autosavePending = false;
+        autosaveNow();
+      }
     }
   }
 
@@ -792,6 +815,43 @@ var CONFIG = {
     });
     var indicator = document.getElementById('autosave-indicator');
     if (indicator) indicator.textContent = 'Restored your progress from earlier.';
+  }
+
+  // ---------------- LAST TIME AUTO-FILL ----------------
+  async function renderLastTimeData(){
+    if (!auth.athleteId) return;
+    var iso = todayIso();
+    var res = await sb.from('workouts').select('id,workout_date')
+      .eq('athlete_id', auth.athleteId).eq('workout_type', state.workoutDay)
+      .eq('completed', true).lt('workout_date', iso)
+      .order('workout_date', {ascending:false}).limit(1);
+    if (res.error || !res.data || !res.data.length) return;
+    var priorWorkoutId = res.data[0].id;
+    var setsRes = await sb.from('workout_sets').select('exercise,set_number,reps,weight,assistance')
+      .eq('workout_id', priorWorkoutId).order('set_number');
+    if (setsRes.error || !setsRes.data) return;
+    var byExercise = {};
+    setsRes.data.forEach(function(s){
+      if (!byExercise[s.exercise]) byExercise[s.exercise] = [];
+      byExercise[s.exercise].push(s);
+    });
+    document.querySelectorAll('#workout-content [data-exercise]').forEach(function(exEl){
+      var name = exEl.getAttribute('data-exercise');
+      var display = exEl.querySelector('.last-workout-display');
+      if (!display) return;
+      var priorSets = byExercise[name];
+      if (!priorSets || !priorSets.length) return;
+      var str = priorSets.map(function(s){
+        if (s.assistance != null && s.assistance !== ''){
+          return (s.reps||'-') + ' @ ' + s.assistance;
+        }
+        var parts = [];
+        if (s.weight) parts.push(s.weight);
+        if (s.reps) parts.push('x ' + s.reps);
+        return parts.length ? parts.join(' ') : '-';
+      }).join(', ');
+      display.value = str;
+    });
   }
 
   function renderWorkout(){
@@ -846,6 +906,7 @@ var CONFIG = {
     document.getElementById('workout-content').innerHTML = html;
     attachAutosaveListeners();
     restoreAutosavedInputs();
+    renderLastTimeData();
   }
 
   window.toggleComplete = function(){
@@ -887,22 +948,29 @@ var CONFIG = {
       if (status) status.textContent += ' (Signed in as coach — not saved as a logged workout.)';
       return;
     }
-    var workoutId = await ensureInProgressWorkout();
-    if (!workoutId){ if (status) status.textContent = 'Could not save to History.'; return; }
+    if (autosaveTimer){ clearTimeout(autosaveTimer); autosaveTimer = null; }
+    while (autosaveInFlight){ await new Promise(function(r){ setTimeout(r, 150); }); }
+    autosaveInFlight = true;
+    try {
+      var workoutId = await ensureInProgressWorkout();
+      if (!workoutId){ if (status) status.textContent = 'Could not save to History.'; return; }
 
-    var sets = collectLoggedSets();
-    await sb.from('workout_sets').delete().eq('workout_id', workoutId);
-    if (sets.length){
-      var setsPayload = sets.map(function(s){ return Object.assign({workout_id: workoutId}, s); });
-      var sRes = await sb.from('workout_sets').insert(setsPayload);
-      if (sRes.error){ if (status) status.textContent = 'Workout saved, but sets failed to save: ' + sRes.error.message; return; }
+      var sets = collectLoggedSets();
+      await sb.from('workout_sets').delete().eq('workout_id', workoutId);
+      if (sets.length){
+        var setsPayload = sets.map(function(s){ return Object.assign({workout_id: workoutId}, s); });
+        var sRes = await sb.from('workout_sets').insert(setsPayload);
+        if (sRes.error){ if (status) status.textContent = 'Workout saved, but sets failed to save: ' + sRes.error.message; return; }
+      }
+
+      var uRes = await sb.from('workouts').update({ completed: true, readiness: { feel: feel } }).eq('id', workoutId);
+      if (uRes.error){ if (status) status.textContent = 'Could not finalize save: ' + uRes.error.message; return; }
+
+      clearAutosaveRecord();
+      if (status) status.textContent = (status.textContent||'') + ' Saved to History.';
+    } finally {
+      autosaveInFlight = false;
     }
-
-    var uRes = await sb.from('workouts').update({ completed: true, readiness: { feel: feel } }).eq('id', workoutId);
-    if (uRes.error){ if (status) status.textContent = 'Could not finalize save: ' + uRes.error.message; return; }
-
-    clearAutosaveRecord();
-    if (status) status.textContent = (status.textContent||'') + ' Saved to History.';
   }
 
   window.recordFeel = function(feel){
@@ -999,14 +1067,52 @@ var CONFIG = {
 
   // ---------------- PROGRESS ----------------
   var progLifts = ['Trap Bar Deadlift','Goblet Squat','Weighted Pull-Up','Dumbbell Chest Press','Weighted Step-Up','Dumbbell RDL','Jump / Power (optional)'];
-  function renderProgress(){
+  // ---------------- PROGRESS DATA ----------------
+  var progressStartsCache = null;
+  var progressCurrentCache = null;
+
+  async function loadProgressData(){
+    progressStartsCache = {};
+    progressCurrentCache = { weight:{}, reps:{}, assistMin:{} };
+    if (!auth.athleteId) return;
+
+    var startsRes = await sb.from('progress_starts').select('lift_key,start_value').eq('athlete_id', auth.athleteId);
+    if (!startsRes.error && startsRes.data){
+      startsRes.data.forEach(function(r){ progressStartsCache[r.lift_key] = r.start_value; });
+    }
+
+    var wRes = await sb.from('workouts').select('id').eq('athlete_id', auth.athleteId).eq('completed', true);
+    if (wRes.error || !wRes.data || !wRes.data.length) return;
+    var workoutIds = wRes.data.map(function(w){ return w.id; });
+    var setsRes = await sb.from('workout_sets').select('exercise,weight,reps,assistance').in('workout_id', workoutIds);
+    if (setsRes.error || !setsRes.data) return;
+    setsRes.data.forEach(function(s){
+      var w = parseFloat(s.weight), r = parseFloat(s.reps), a = parseFloat(s.assistance);
+      if (!isNaN(w) && (progressCurrentCache.weight[s.exercise] == null || w > progressCurrentCache.weight[s.exercise])) progressCurrentCache.weight[s.exercise] = w;
+      if (!isNaN(r) && (progressCurrentCache.reps[s.exercise] == null || r > progressCurrentCache.reps[s.exercise])) progressCurrentCache.reps[s.exercise] = r;
+      if (!isNaN(a) && (progressCurrentCache.assistMin[s.exercise] == null || a < progressCurrentCache.assistMin[s.exercise])) progressCurrentCache.assistMin[s.exercise] = a;
+    });
+  }
+
+  window.saveProgressStart = async function(liftKey, value){
+    if (!auth.athleteId) return;
+    var num = parseFloat(value);
+    if (isNaN(num)) return;
+    progressStartsCache[liftKey] = num;
+    await sb.from('progress_starts').upsert({ athlete_id: auth.athleteId, lift_key: liftKey, start_value: num, updated_at: new Date().toISOString() }, { onConflict: 'athlete_id,lift_key' });
+  };
+
+  async function renderProgress(){
+    await loadProgressData();
     var html = '';
     progLifts.forEach(function(name, i){
+      var startVal = progressStartsCache[name];
+      var curVal = progressCurrentCache.weight[name];
       html += '<div class="card accent-red">';
       html += '<h3>'+name+'</h3>';
       html += '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;">';
-      html += '<div><label class="field-label">Starting</label><input class="field prog-input" data-idx="'+i+'" data-role="start" placeholder="e.g. 135"></div>';
-      html += '<div><label class="field-label">Current</label><input class="field prog-input" data-idx="'+i+'" data-role="current" placeholder="e.g. 155"></div>';
+      html += '<div><label class="field-label">Starting</label><input class="field prog-input" data-idx="'+i+'" data-role="start" data-key="'+name+'" placeholder="e.g. 135" value="'+(startVal!=null?startVal:'')+'"></div>';
+      html += '<div><label class="field-label">Current</label><input class="field prog-input" data-idx="'+i+'" data-role="current" readonly style="background:#F5F5F5;" placeholder="Not logged yet" value="'+(curVal!=null?curVal:'')+'"></div>';
       html += '</div>';
       html += '<div class="prog-bar-track"><div class="prog-bar-fill" id="prog-bar-'+i+'" style="width:0%;"></div></div>';
       html += '<div class="prog-nums"><span>Start</span><span id="prog-delta-'+i+'"></span></div>';
@@ -1021,10 +1127,15 @@ var CONFIG = {
       html += '<p class="small" style="margin-top:8px; color:var(--slate-light);">This list is for this browsing session only &mdash; it clears on reload.</p></div>';
     }
     document.getElementById('progress-grid').innerHTML = html;
-    document.querySelectorAll('.prog-input').forEach(function(inp){
+    document.querySelectorAll('.prog-input[data-role="start"]').forEach(function(inp){
       inp.addEventListener('input', updateProgBar);
+      inp.addEventListener('blur', function(){ saveProgressStart(this.getAttribute('data-key'), this.value); });
+    });
+    document.querySelectorAll('.prog-input[data-idx]').forEach(function(inp){
+      updateProgBar.call(inp);
     });
   }
+  
   function updateProgBar(){
     var idx = this.getAttribute('data-idx');
     var startEl = document.querySelector('.prog-input[data-idx="'+idx+'"][data-role="start"]');
