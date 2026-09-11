@@ -819,10 +819,11 @@ var CONFIG = {
 
   // ---------------- LAST TIME AUTO-FILL ----------------
   async function renderLastTimeData(){
-    if (!auth.athleteId) return;
+    var scopedId = await resolveSiteAthleteId();
+    if (!scopedId) return;
     var iso = todayIso();
     var res = await sb.from('workouts').select('id,workout_date')
-      .eq('athlete_id', auth.athleteId).eq('workout_type', state.workoutDay)
+      .eq('athlete_id', scopedId).eq('workout_type', state.workoutDay)
       .eq('completed', true).lt('workout_date', iso)
       .order('workout_date', {ascending:false}).limit(1);
     if (res.error || !res.data || !res.data.length) return;
@@ -1070,48 +1071,85 @@ var CONFIG = {
   // ---------------- PROGRESS DATA ----------------
   var progressStartsCache = null;
   var progressCurrentCache = null;
+  var progressTargetCache = null;
 
   async function loadProgressData(){
-    progressStartsCache = {};
+    progressStartsCache = { weight:{}, reps:{}, assistMin:{} };
     progressCurrentCache = { weight:{}, reps:{}, assistMin:{} };
-    if (!auth.athleteId) return;
+    progressTargetCache = {};
+    var scopedId = await resolveSiteAthleteId();
+    if (!scopedId) return;
 
-    var startsRes = await sb.from('progress_starts').select('lift_key,start_value').eq('athlete_id', auth.athleteId);
-    if (!startsRes.error && startsRes.data){
-      startsRes.data.forEach(function(r){ progressStartsCache[r.lift_key] = r.start_value; });
+    var targetsRes = await sb.from('progress_starts').select('lift_key,start_value').eq('athlete_id', scopedId);
+    if (!targetsRes.error && targetsRes.data){
+      targetsRes.data.forEach(function(r){ progressTargetCache[r.lift_key] = r.start_value; });
     }
 
-    var wRes = await sb.from('workouts').select('id').eq('athlete_id', auth.athleteId).eq('completed', true);
+    var wRes = await sb.from('workouts').select('id,workout_date').eq('athlete_id', scopedId).eq('completed', true).order('workout_date', {ascending:true});
     if (wRes.error || !wRes.data || !wRes.data.length) return;
     var workoutIds = wRes.data.map(function(w){ return w.id; });
-    var setsRes = await sb.from('workout_sets').select('exercise,weight,reps,assistance').in('workout_id', workoutIds);
+    var setsRes = await sb.from('workout_sets').select('workout_id,exercise,weight,reps,assistance').in('workout_id', workoutIds);
     if (setsRes.error || !setsRes.data) return;
+
+    var setsByWorkout = {};
     setsRes.data.forEach(function(s){
-      var w = parseFloat(s.weight), r = parseFloat(s.reps), a = parseFloat(s.assistance);
-      if (!isNaN(w) && (progressCurrentCache.weight[s.exercise] == null || w > progressCurrentCache.weight[s.exercise])) progressCurrentCache.weight[s.exercise] = w;
-      if (!isNaN(r) && (progressCurrentCache.reps[s.exercise] == null || r > progressCurrentCache.reps[s.exercise])) progressCurrentCache.reps[s.exercise] = r;
-      if (!isNaN(a) && (progressCurrentCache.assistMin[s.exercise] == null || a < progressCurrentCache.assistMin[s.exercise])) progressCurrentCache.assistMin[s.exercise] = a;
+      if (!setsByWorkout[s.workout_id]) setsByWorkout[s.workout_id] = [];
+      setsByWorkout[s.workout_id].push(s);
+    });
+
+    var sessionCount = { weight:{}, reps:{}, assistMin:{} };
+    wRes.data.forEach(function(w){
+      var sets = setsByWorkout[w.id] || [];
+      var countedThisWorkout = { weight:{}, reps:{}, assistMin:{} };
+      sets.forEach(function(s){
+        var wt = parseFloat(s.weight), r = parseFloat(s.reps), a = parseFloat(s.assistance);
+        if (!isNaN(wt)){
+          if (!countedThisWorkout.weight[s.exercise]){
+            sessionCount.weight[s.exercise] = (sessionCount.weight[s.exercise]||0) + 1;
+            countedThisWorkout.weight[s.exercise] = true;
+          }
+          if (sessionCount.weight[s.exercise] === 2 && progressStartsCache.weight[s.exercise] == null) progressStartsCache.weight[s.exercise] = wt;
+          if (progressCurrentCache.weight[s.exercise] == null || wt > progressCurrentCache.weight[s.exercise]) progressCurrentCache.weight[s.exercise] = wt;
+        }
+        if (!isNaN(r)){
+          if (!countedThisWorkout.reps[s.exercise]){
+            sessionCount.reps[s.exercise] = (sessionCount.reps[s.exercise]||0) + 1;
+            countedThisWorkout.reps[s.exercise] = true;
+          }
+          if (sessionCount.reps[s.exercise] === 2 && progressStartsCache.reps[s.exercise] == null) progressStartsCache.reps[s.exercise] = r;
+          if (progressCurrentCache.reps[s.exercise] == null || r > progressCurrentCache.reps[s.exercise]) progressCurrentCache.reps[s.exercise] = r;
+        }
+        if (!isNaN(a)){
+          if (!countedThisWorkout.assistMin[s.exercise]){
+            sessionCount.assistMin[s.exercise] = (sessionCount.assistMin[s.exercise]||0) + 1;
+            countedThisWorkout.assistMin[s.exercise] = true;
+          }
+          if (sessionCount.assistMin[s.exercise] === 2 && progressStartsCache.assistMin[s.exercise] == null) progressStartsCache.assistMin[s.exercise] = a;
+          if (progressCurrentCache.assistMin[s.exercise] == null || a < progressCurrentCache.assistMin[s.exercise]) progressCurrentCache.assistMin[s.exercise] = a;
+        }
+      });
     });
   }
 
   window.saveProgressStart = async function(liftKey, value){
-    if (!auth.athleteId) return;
+    var scopedId = await resolveSiteAthleteId();
+    if (!scopedId) return;
     var num = parseFloat(value);
     if (isNaN(num)) return;
-    progressStartsCache[liftKey] = num;
-    await sb.from('progress_starts').upsert({ athlete_id: auth.athleteId, lift_key: liftKey, start_value: num, updated_at: new Date().toISOString() }, { onConflict: 'athlete_id,lift_key' });
+    progressTargetCache[liftKey] = num;
+    await sb.from('progress_starts').upsert({ athlete_id: scopedId, lift_key: liftKey, start_value: num, updated_at: new Date().toISOString() }, { onConflict: 'athlete_id,lift_key' });
   };
 
   async function renderProgress(){
     await loadProgressData();
     var html = '';
     progLifts.forEach(function(name, i){
-      var startVal = progressStartsCache[name];
+      var startVal = progressStartsCache.weight[name];
       var curVal = progressCurrentCache.weight[name];
       html += '<div class="card accent-red">';
       html += '<h3>'+name+'</h3>';
       html += '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;">';
-      html += '<div><label class="field-label">Starting</label><input class="field prog-input" data-idx="'+i+'" data-role="start" data-key="'+name+'" placeholder="e.g. 135" value="'+(startVal!=null?startVal:'')+'"></div>';
+      html += '<div><label class="field-label">Starting</label><input class="field prog-input" data-idx="'+i+'" data-role="start" readonly style="background:#F5F5F5;" placeholder="Locks in after 2nd time logged" value="'+(startVal!=null?startVal:'')+'"></div>';
       html += '<div><label class="field-label">Current</label><input class="field prog-input" data-idx="'+i+'" data-role="current" readonly style="background:#F5F5F5;" placeholder="Not logged yet" value="'+(curVal!=null?curVal:'')+'"></div>';
       html += '</div>';
       html += '<div class="prog-bar-track"><div class="prog-bar-fill" id="prog-bar-'+i+'" style="width:0%;"></div></div>';
@@ -1127,10 +1165,6 @@ var CONFIG = {
       html += '<p class="small" style="margin-top:8px; color:var(--slate-light);">This list is for this browsing session only &mdash; it clears on reload.</p></div>';
     }
     document.getElementById('progress-grid').innerHTML = html;
-    document.querySelectorAll('.prog-input[data-role="start"]').forEach(function(inp){
-      inp.addEventListener('input', updateProgBar);
-      inp.addEventListener('blur', function(){ saveProgressStart(this.getAttribute('data-key'), this.value); });
-    });
     document.querySelectorAll('.prog-input[data-idx]').forEach(function(inp){
       updateProgBar.call(inp);
     });
