@@ -95,6 +95,17 @@
   .set-row .set-label{font-size:11.5px; font-weight:700; color:var(--slate);}
   .set-row input[type=checkbox]{width:20px; height:20px; accent-color:var(--red); cursor:pointer;}
   .complete-btn{background:var(--red); color:#fff; border:none; border-radius:8px; padding:13px; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; font-size:13px; cursor:pointer; width:100%; margin-top:8px;}
+  .reassurance-note{background:#fff; border-left:3px solid var(--slate-light); border-radius:6px; padding:10px 12px; font-size:12.5px; color:var(--ink); line-height:1.5; margin-top:14px;}
+  .consistency-label{font-family:"Arial Narrow",Helvetica,Arial,sans-serif; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; font-size:13px; color:var(--charcoal); margin:0 0 10px;}
+  .consistency-of{font-size:14px; color:var(--slate);}
+  .consistency-line{font-size:13px; color:var(--slate); margin:10px 0 0; line-height:1.5;}
+  .consistency-status{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
+  .consistency-star{width:36px; height:36px; border-radius:50%; background:var(--red); color:#fff; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:800; flex-shrink:0;}
+  .consistency-status-word{font-size:19px; font-weight:800; color:var(--charcoal);}
+  .consistency-lastweek{border-top:1px solid var(--border); padding-top:12px;}
+  .consistency-lastweek-label{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--slate); margin:0 0 6px;}
+  .consistency-num-sm{display:flex; align-items:baseline; gap:6px;}
+  .consistency-big-sm{font-size:22px; font-weight:800; color:var(--charcoal);}
   .complete-btn.done{background:var(--green);}
   .feel-btn{flex:1; background:#fff; border:1.5px solid var(--border); border-radius:8px; padding:10px 6px; cursor:pointer; font-weight:800; font-size:12px; text-align:center; line-height:1.4;}
   .feel-btn span{display:block;}
@@ -171,6 +182,7 @@
   <!-- ===================== HOME ===================== -->
   <div class="view active" id="view-home">
     <div id="coach-message-banner" style="display:none; margin-bottom:14px;"></div>
+    <div class="card accent-red" id="consistency-card" style="display:none; margin-bottom:14px;"></div>
 
     <div class="card accent-charcoal" style="margin-bottom:14px;">
       <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="togglePastMessages()">
@@ -596,8 +608,73 @@ var CONFIG = {
     pastMessagesLoaded = true;
   };
 
+  // ---------------- CONSISTENCY CARD ----------------
+  function countValidDates(startDate, endDate){
+    var dates = [];
+    var d = new Date(startDate);
+    while (d <= endDate){
+      var wd = d.getDay();
+      if (wd===1||wd===3||wd===5){
+        var override = getLiftOverride(d);
+        if (!override || override.mode !== 'no-lift') dates.push(new Date(d));
+      }
+      d = addDays(d, 1);
+    }
+    return dates;
+  }
+
+  async function tallyRange(scopedId, dates){
+    if (!dates.length) return { completed:0, total:0 };
+    var isoDates = dates.map(function(dt){
+      return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+    });
+    var res = await sb.from('workouts').select('workout_date,completed,excused').eq('athlete_id', scopedId).in('workout_date', isoDates);
+    var byDate = {};
+    if (!res.error && res.data) res.data.forEach(function(w){ byDate[w.workout_date] = w; });
+    var excusedCount = 0, completedCount = 0;
+    isoDates.forEach(function(iso){ if (byDate[iso] && byDate[iso].excused) excusedCount++; });
+    isoDates.forEach(function(iso){ if (byDate[iso] && byDate[iso].completed && !byDate[iso].excused) completedCount++; });
+    return { completed: completedCount, total: isoDates.length - excusedCount };
+  }
+
+  async function renderConsistencyCard(){
+    var el = document.getElementById('consistency-card');
+    if (!el) return;
+    var scopedId = await resolveSiteAthleteId();
+    if (!scopedId){ el.style.display = 'none'; return; }
+    var today = todayMid();
+    var block = getPhaseBlock(today);
+    if (!block){ el.style.display = 'none'; return; }
+    var phaseStart = parseDate(block.start);
+
+    var phaseDates = countValidDates(phaseStart, today);
+    var phaseTally = await tallyRange(scopedId, phaseDates);
+    if (phaseTally.total <= 0){ el.style.display = 'none'; return; }
+    var pct = Math.round((phaseTally.completed / phaseTally.total) * 100);
+    var statusWord = pct >= 80 ? 'Locked In' : (pct >= 50 ? 'Building' : 'Showing Up');
+
+    var thisMonday = addDays(today, -((today.getDay()+6)%7));
+    var lastWeekStart = addDays(thisMonday, -7);
+    var lastWeekEnd = addDays(thisMonday, -1);
+    var lastWeekDates = countValidDates(lastWeekStart, lastWeekEnd);
+    var lastWeekTally = await tallyRange(scopedId, lastWeekDates);
+
+    var html = '<p class="consistency-label">This Phase</p>';
+    html += '<div class="consistency-status"><span class="consistency-star">&#9733;</span><span class="consistency-status-word">'+statusWord+'</span></div>';
+    if (lastWeekTally.total > 0){
+      html += '<div class="consistency-lastweek">';
+      html += '<p class="consistency-lastweek-label">Last Week</p>';
+      html += '<div class="consistency-num-sm"><span class="consistency-big-sm">'+lastWeekTally.completed+'</span><span class="consistency-of"> of '+lastWeekTally.total+' lifts</span></div>';
+      html += '</div>';
+    }
+    html += '<p class="consistency-line">Showing up is the goal. You\'re doing that.</p>';
+    el.innerHTML = html;
+    el.style.display = 'block';
+  }
+
   function renderHome(){
     renderCoachMessageBanner();
+    renderConsistencyCard();
     var today = todayMid();
     var block = getPhaseBlock(today);
     document.getElementById('home-phase').textContent = 'Current Phase: ' + (block ? block.label : (today < parseDate(CONFIG.seasonStart) ? 'Not Started Yet' : 'Season Complete'));
@@ -895,6 +972,7 @@ var CONFIG = {
     }
 
     if (!todayOverride || todayOverride.mode!=='no-lift'){
+      html += '<div class="reassurance-note">Ran out of time? Do what you can with good form and hit complete anyway &mdash; showing up matters more than finishing everything.</div>';
       html += '<button class="complete-btn" id="complete-btn" onclick="toggleComplete()">Mark Workout Complete</button>';
       html += '<div id="feel-checkin" style="display:none; margin-top:12px;">';
       html += '<div class="card"><h3 style="text-align:center;">How Did That Workout Feel?</h3>';
