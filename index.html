@@ -87,6 +87,8 @@
   .ex-card{border:1px solid var(--border); border-radius:8px; padding:12px 14px; margin-bottom:10px; background:#fff;}
   .ex-top{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
   .ex-name{font-weight:800; font-size:14px;}
+  .flag-ex-btn{background:none; border:1.5px solid var(--border); color:var(--slate-light); font-size:14px; width:28px; height:28px; border-radius:6px; cursor:pointer; flex-shrink:0; line-height:1;}
+  .flag-ex-btn.flagged{background:var(--red); border-color:var(--red); color:#fff;}
   .ex-sr{font-weight:800; color:var(--red-deep); font-size:13px; white-space:nowrap; text-align:right;}
   .ex-cue{font-size:11.5px; color:var(--slate); margin:5px 0 10px;}
   .ex-last{font-size:11.5px; margin-bottom:8px;}
@@ -96,16 +98,11 @@
   .set-row input[type=checkbox]{width:20px; height:20px; accent-color:var(--red); cursor:pointer;}
   .complete-btn{background:var(--red); color:#fff; border:none; border-radius:8px; padding:13px; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; font-size:13px; cursor:pointer; width:100%; margin-top:8px;}
   .reassurance-note{background:#fff; border-left:3px solid var(--slate-light); border-radius:6px; padding:10px 12px; font-size:12.5px; color:var(--ink); line-height:1.5; margin-top:14px;}
-  .consistency-label{font-family:"Arial Narrow",Helvetica,Arial,sans-serif; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; font-size:13px; color:var(--charcoal); margin:0 0 10px;}
-  .consistency-of{font-size:14px; color:var(--slate);}
-  .consistency-line{font-size:13px; color:var(--slate); margin:10px 0 0; line-height:1.5;}
-  .consistency-status{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
-  .consistency-star{width:36px; height:36px; border-radius:50%; background:var(--red); color:#fff; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:800; flex-shrink:0;}
-  .consistency-status-word{font-size:19px; font-weight:800; color:var(--charcoal);}
-  .consistency-lastweek{border-top:1px solid var(--border); padding-top:12px;}
-  .consistency-lastweek-label{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--slate); margin:0 0 6px;}
+  .consistency-label{font-family:"Arial Narrow",Helvetica,Arial,sans-serif; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; font-size:13px; color:var(--charcoal); margin:0 0 8px;}
   .consistency-num-sm{display:flex; align-items:baseline; gap:6px;}
   .consistency-big-sm{font-size:22px; font-weight:800; color:var(--charcoal);}
+  .consistency-of{font-size:14px; color:var(--slate);}
+  .consistency-line{font-size:13px; color:var(--slate); margin:8px 0 0; line-height:1.5;}
   .complete-btn.done{background:var(--green);}
   .feel-btn{flex:1; background:#fff; border:1.5px solid var(--border); border-radius:8px; padding:10px 6px; cursor:pointer; font-weight:800; font-size:12px; text-align:center; line-height:1.4;}
   .feel-btn span{display:block;}
@@ -182,7 +179,6 @@
   <!-- ===================== HOME ===================== -->
   <div class="view active" id="view-home">
     <div id="coach-message-banner" style="display:none; margin-bottom:14px;"></div>
-    <div class="card accent-red" id="consistency-card" style="display:none; margin-bottom:14px;"></div>
 
     <div class="card accent-charcoal" style="margin-bottom:14px;">
       <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="togglePastMessages()">
@@ -203,6 +199,7 @@
       <h3>Upcoming Meet</h3>
       <div id="home-next-meet" class="small" style="margin-top:6px;"></div>
     </div>
+    <div class="card accent-charcoal" id="thisweek-card" style="display:none; margin-top:14px;"></div>
   </div>
 
   <!-- ===================== WORKOUTS ===================== -->
@@ -609,72 +606,52 @@ var CONFIG = {
   };
 
   // ---------------- CONSISTENCY CARD ----------------
-  function countValidDates(startDate, endDate){
-    var dates = [];
-    var d = new Date(startDate);
-    while (d <= endDate){
-      var wd = d.getDay();
-      if (wd===1||wd===3||wd===5){
-        var override = getLiftOverride(d);
-        if (!override || override.mode !== 'no-lift') dates.push(new Date(d));
-      }
-      d = addDays(d, 1);
-    }
-    return dates;
-  }
-
-  async function tallyRange(scopedId, dates){
-    if (!dates.length) return { completed:0, total:0 };
-    var isoDates = dates.map(function(dt){
-      return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
-    });
-    var res = await sb.from('workouts').select('workout_date,completed,excused').eq('athlete_id', scopedId).in('workout_date', isoDates);
-    var byDate = {};
-    if (!res.error && res.data) res.data.forEach(function(w){ byDate[w.workout_date] = w; });
-    var excusedCount = 0, completedCount = 0;
-    isoDates.forEach(function(iso){ if (byDate[iso] && byDate[iso].excused) excusedCount++; });
-    isoDates.forEach(function(iso){ if (byDate[iso] && byDate[iso].completed && !byDate[iso].excused) completedCount++; });
-    return { completed: completedCount, total: isoDates.length - excusedCount };
-  }
-
-  async function renderConsistencyCard(){
-    var el = document.getElementById('consistency-card');
+  // ---------------- THIS WEEK CARD ----------------
+  async function renderThisWeekCard(){
+    var el = document.getElementById('thisweek-card');
     if (!el) return;
-    var scopedId = await resolveSiteAthleteId();
-    if (!scopedId){ el.style.display = 'none'; return; }
-    var today = todayMid();
-    var block = getPhaseBlock(today);
-    if (!block){ el.style.display = 'none'; return; }
-    var phaseStart = parseDate(block.start);
-
-    var phaseDates = countValidDates(phaseStart, today);
-    var phaseTally = await tallyRange(scopedId, phaseDates);
-    if (phaseTally.total <= 0){ el.style.display = 'none'; return; }
-    var pct = Math.round((phaseTally.completed / phaseTally.total) * 100);
-    var statusWord = pct >= 80 ? 'Locked In' : (pct >= 50 ? 'Building' : 'Showing Up');
-
-    var thisMonday = addDays(today, -((today.getDay()+6)%7));
-    var lastWeekStart = addDays(thisMonday, -7);
-    var lastWeekEnd = addDays(thisMonday, -1);
-    var lastWeekDates = countValidDates(lastWeekStart, lastWeekEnd);
-    var lastWeekTally = await tallyRange(scopedId, lastWeekDates);
-
-    var html = '<p class="consistency-label">This Phase</p>';
-    html += '<div class="consistency-status"><span class="consistency-star">&#9733;</span><span class="consistency-status-word">'+statusWord+'</span></div>';
-    if (lastWeekTally.total > 0){
-      html += '<div class="consistency-lastweek">';
-      html += '<p class="consistency-lastweek-label">Last Week</p>';
-      html += '<div class="consistency-num-sm"><span class="consistency-big-sm">'+lastWeekTally.completed+'</span><span class="consistency-of"> of '+lastWeekTally.total+' lifts</span></div>';
-      html += '</div>';
+    try {
+      var scopedId = await resolveSiteAthleteId();
+      if (!scopedId){ el.style.display = 'none'; return; }
+      var today = todayMid();
+      var thisMonday = addDays(today, -((today.getDay()+6)%7));
+      var weekEnd = addDays(thisMonday, 6);
+      var dates = [];
+      var d = new Date(thisMonday);
+      while (d <= weekEnd){
+        var wd = d.getDay();
+        if (wd===1||wd===3||wd===5){
+          var override = getLiftOverride(d);
+          if (!override || override.mode !== 'no-lift') dates.push(new Date(d));
+        }
+        d = addDays(d, 1);
+      }
+      if (!dates.length){ el.style.display = 'none'; return; }
+      var isoDates = dates.map(function(dt){
+        return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+      });
+      var res = await sb.from('workouts').select('workout_date,completed,excused').eq('athlete_id', scopedId).in('workout_date', isoDates);
+      if (res.error){ el.style.display = 'none'; return; }
+      var byDate = {};
+      (res.data||[]).forEach(function(w){ byDate[w.workout_date] = w; });
+      var excusedCount = 0, completedCount = 0;
+      isoDates.forEach(function(iso){ if (byDate[iso] && byDate[iso].excused) excusedCount++; });
+      var total = isoDates.length - excusedCount;
+      isoDates.forEach(function(iso){ if (byDate[iso] && byDate[iso].completed && !byDate[iso].excused) completedCount++; });
+      if (total <= 0){ el.style.display = 'none'; return; }
+      var html = '<p class="consistency-label">This Week</p>';
+      html += '<div class="consistency-num-sm"><span class="consistency-big-sm">'+completedCount+'</span><span class="consistency-of"> of '+total+' lifts</span></div>';
+      html += '<p class="consistency-line">Showing up is the goal. You\'re doing that.</p>';
+      el.innerHTML = html;
+      el.style.display = 'block';
+    } catch(e){
+      el.style.display = 'none';
     }
-    html += '<p class="consistency-line">Showing up is the goal. You\'re doing that.</p>';
-    el.innerHTML = html;
-    el.style.display = 'block';
   }
 
   function renderHome(){
     renderCoachMessageBanner();
-    renderConsistencyCard();
+    renderThisWeekCard();
     var today = todayMid();
     var block = getPhaseBlock(today);
     document.getElementById('home-phase').textContent = 'Current Phase: ' + (block ? block.label : (today < parseDate(CONFIG.seasonStart) ? 'Not Started Yet' : 'Season Complete'));
@@ -737,7 +714,7 @@ var CONFIG = {
 
   function renderSetsExercise(ex, idx){
     var h = '<div class="ex-card" data-exercise="'+ex.name.replace(/"/g,'&quot;')+'">';
-    h += '<div class="ex-top"><span class="ex-name">'+ex.name+'</span><span class="ex-sr">'+ex.sets.length+' &times; '+ex.sets[0]+'</span></div>';
+    h += '<div class="ex-top"><span class="ex-name">'+ex.name+'</span><span class="ex-sr">'+ex.sets.length+' &times; '+ex.sets[0]+'</span><button class="flag-ex-btn" onclick="toggleExerciseFlag(this, \''+ex.name.replace(/'/g,"\\'")+'\')" title="Flag to discuss at practice">&#9873;</button></div>';
     h += '<div class="ex-cue">Rest '+ex.rest+' &middot; '+ex.cue+'</div>';
     h += '<div class="ex-last"><label class="field-label">Last Workout</label><input class="field last-workout-display" readonly placeholder="First time doing this one" style="background:#F5F5F5;"></div>';
     ex.sets.forEach(function(target, i){
@@ -763,9 +740,9 @@ var CONFIG = {
   }
   function renderContrastExercise(ex){
     var h = '<div class="contrast-card" data-exercise="'+ex.name.replace(/"/g,'&quot;')+'">';
-    h += '<div class="ex-name">'+ex.name+'</div>';
+    h += '<div style="display:flex; justify-content:space-between; align-items:center;"><div class="ex-name">'+ex.name+'</div><button class="flag-ex-btn" onclick="toggleExerciseFlag(this, \''+ex.name.replace(/'/g,"\\'")+'\')" title="Flag to discuss at practice">&#9873;</button></div>';
     h += '<div class="ex-cue" style="margin-top:6px;">'+ex.rounds+' rounds: lift &times;'+ex.liftReps+' &rarr; rest '+ex.restBetween+' &rarr; jump &times;'+ex.jumpReps+' &rarr; rest '+ex.restRounds+' before repeating.<br>'+ex.cue+'</div>';
-    h += '<div style="margin-top:8px;"><label class="field-label">Lift Weight</label><input class="field log-weight" placeholder="lb"></div>';
+    h += '<div style="margin-top:8px;"><label class="field-label">Lift Weight</label><input class="field log-weight" placeholder="lb, target '+ex.liftReps+' reps"></div>';
     for (var r=1;r<=ex.rounds;r++){
       h += '<div class="round-row" data-set="'+r+'"><input type="checkbox" class="log-done"><span class="small">Round '+r+' complete</span></div>';
     }
@@ -834,12 +811,13 @@ var CONFIG = {
     autosaveInFlight = true;
     try {
       var sets = collectLoggedSets();
-      if (!sets.length) return;
+      if (!sets.length && !flaggedExercises.length) return;
       var workoutId = await ensureInProgressWorkout();
       if (!workoutId) return;
       await sb.from('workout_sets').delete().eq('workout_id', workoutId);
       var payload = sets.map(function(s){ return Object.assign({workout_id: workoutId}, s); });
-      await sb.from('workout_sets').insert(payload);
+      if (payload.length) await sb.from('workout_sets').insert(payload);
+      await sb.from('workouts').update({ flagged_exercises: flaggedExercises.length ? flaggedExercises.join(', ') : null }).eq('id', workoutId);
       var indicator = document.getElementById('autosave-indicator');
       if (indicator){
         indicator.textContent = 'Saved ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
@@ -872,24 +850,36 @@ var CONFIG = {
   }
 
   async function restoreAutosavedInputs(){
+    flaggedExercises = [];
     if (!auth.athleteId) return;
     var rec = getAutosaveRecord();
     var iso = todayIso();
     if (!rec || rec.date!==iso || rec.phase!==state.workoutPhase || rec.day!==state.workoutDay || !rec.workoutId) return;
     var res = await sb.from('workout_sets').select('exercise,set_number,reps,weight,assistance').eq('workout_id', rec.workoutId);
-    if (res.error || !res.data || !res.data.length) return;
-    res.data.forEach(function(row){
-      var exEl = document.querySelector('#workout-content [data-exercise="'+String(row.exercise).replace(/"/g,'\\"')+'"]');
-      if (!exEl) return;
-      var setEl = exEl.querySelector('[data-set="'+row.set_number+'"]');
-      if (!setEl) return;
-      var weightEl = setEl.querySelector('.log-weight');
-      var repsEl = setEl.querySelector('.log-reps');
-      var assistEl = setEl.querySelector('.log-assist');
-      if (weightEl && row.weight!=null) weightEl.value = row.weight;
-      if (repsEl && row.reps!=null) repsEl.value = row.reps;
-      if (assistEl && row.assistance!=null) assistEl.value = row.assistance;
-    });
+    if (!res.error && res.data && res.data.length){
+      res.data.forEach(function(row){
+        var exEl = document.querySelector('#workout-content [data-exercise="'+String(row.exercise).replace(/"/g,'\\"')+'"]');
+        if (!exEl) return;
+        var setEl = exEl.querySelector('[data-set="'+row.set_number+'"]');
+        if (!setEl) return;
+        var weightEl = setEl.querySelector('.log-weight');
+        var repsEl = setEl.querySelector('.log-reps');
+        var assistEl = setEl.querySelector('.log-assist');
+        if (weightEl && row.weight!=null) weightEl.value = row.weight;
+        if (repsEl && row.reps!=null) repsEl.value = row.reps;
+        if (assistEl && row.assistance!=null) assistEl.value = row.assistance;
+      });
+    }
+    var wRes = await sb.from('workouts').select('flagged_exercises').eq('id', rec.workoutId).single();
+    if (!wRes.error && wRes.data && wRes.data.flagged_exercises){
+      flaggedExercises = wRes.data.flagged_exercises.split(', ');
+      flaggedExercises.forEach(function(exName){
+        var exEl = document.querySelector('#workout-content [data-exercise="'+exName.replace(/"/g,'\\"')+'"]');
+        if (!exEl) return;
+        var btn = exEl.querySelector('.flag-ex-btn');
+        if (btn) btn.classList.add('flagged');
+      });
+    }
     var indicator = document.getElementById('autosave-indicator');
     if (indicator) indicator.textContent = 'Restored your progress from earlier.';
   }
@@ -955,6 +945,7 @@ var CONFIG = {
     else if (isToday && taper) html += '<span class="tag blue">Taper Week &mdash; keep it light</span>';
     html += '</div>';
     if (isToday && !todayOverride) html += '<p class="small" style="margin-top:4px;">This is today\'s workout.</p>';
+    html += '<p class="small" style="margin-top:8px; color:var(--slate-light);">Rest between sets on purpose \u2014 a rushed set doesn\'t build strength the way a fully recovered one does.</p>';
     html += '</div>';
 
     html += '<p class="small" id="autosave-indicator" style="text-align:right; color:var(--slate-light); opacity:0.6; margin:6px 4px 0 0;">&nbsp;</p>';
@@ -1017,6 +1008,14 @@ var CONFIG = {
           rows.push({ exercise: exName, set_number: setNum, reps: reps || null, weight: weight || null, assistance: null });
         }
       });
+      exEl.querySelectorAll('.log-weight').forEach(function(input){
+        if (input.closest('[data-set]')) return;
+        var val = input.value;
+        if (!val) return;
+        var slot = input.getAttribute('data-slot');
+        var label = slot ? (exName + ' (' + (slot==='a' ? '1st' : '2nd') + ')') : exName;
+        rows.push({ exercise: label, set_number: 1, reps: null, weight: val, assistance: null });
+      });
     });
     return rows;
   }
@@ -1042,10 +1041,11 @@ var CONFIG = {
         if (sRes.error){ if (status) status.textContent = 'Workout saved, but sets failed to save: ' + sRes.error.message; return; }
       }
 
-      var uRes = await sb.from('workouts').update({ completed: true, readiness: { feel: feel } }).eq('id', workoutId);
+      var uRes = await sb.from('workouts').update({ completed: true, readiness: { feel: feel }, flagged_exercises: flaggedExercises.length ? flaggedExercises.join(', ') : null }).eq('id', workoutId);
       if (uRes.error){ if (status) status.textContent = 'Could not finalize save: ' + uRes.error.message; return; }
 
       clearAutosaveRecord();
+      flaggedExercises = [];
       if (status) status.textContent = (status.textContent||'') + ' Saved to History.';
     } finally {
       autosaveInFlight = false;
