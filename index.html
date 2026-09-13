@@ -817,7 +817,8 @@ var CONFIG = {
       await sb.from('workout_sets').delete().eq('workout_id', workoutId);
       var payload = sets.map(function(s){ return Object.assign({workout_id: workoutId}, s); });
       if (payload.length) await sb.from('workout_sets').insert(payload);
-      await sb.from('workouts').update({ flagged_exercises: flaggedExercises.length ? flaggedExercises.join(', ') : null }).eq('id', workoutId);
+      var counts = computeExerciseCounts();
+      await sb.from('workouts').update({ flagged_exercises: flaggedExercises.length ? flaggedExercises.join(', ') : null, exercises_planned: counts.planned, exercises_completed: counts.completed }).eq('id', workoutId);
       var indicator = document.getElementById('autosave-indicator');
       if (indicator){
         indicator.textContent = 'Saved ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
@@ -991,6 +992,24 @@ var CONFIG = {
     }
   };
 
+  function computeExerciseCounts(){
+    var dayObj = CONFIG.program[state.workoutPhase] && CONFIG.program[state.workoutPhase][state.workoutDay];
+    var exercises = (dayObj && dayObj.exercises) || [];
+    var planned = 0, completed = 0;
+    exercises.forEach(function(ex){
+      var cue = (ex.cue || '').toLowerCase();
+      if (cue.indexOf('optional') > -1) return;
+      planned++;
+      var exEl = document.querySelector('#workout-content [data-exercise="'+ex.name.replace(/"/g,'\\"')+'"]');
+      if (!exEl) return;
+      var hasActivity = false;
+      exEl.querySelectorAll('.log-done').forEach(function(cb){ if (cb.checked) hasActivity = true; });
+      exEl.querySelectorAll('.log-weight, .log-reps, .log-assist').forEach(function(inp){ if (inp.value) hasActivity = true; });
+      if (hasActivity) completed++;
+    });
+    return { planned: planned, completed: completed };
+  }
+
   function collectLoggedSets(){
     var rows = [];
     document.querySelectorAll('#workout-content [data-exercise]').forEach(function(exEl){
@@ -1041,7 +1060,8 @@ var CONFIG = {
         if (sRes.error){ if (status) status.textContent = 'Workout saved, but sets failed to save: ' + sRes.error.message; return; }
       }
 
-      var uRes = await sb.from('workouts').update({ completed: true, readiness: { feel: feel }, flagged_exercises: flaggedExercises.length ? flaggedExercises.join(', ') : null }).eq('id', workoutId);
+      var counts = computeExerciseCounts();
+      var uRes = await sb.from('workouts').update({ completed: true, readiness: { feel: feel }, flagged_exercises: flaggedExercises.length ? flaggedExercises.join(', ') : null, exercises_planned: counts.planned, exercises_completed: counts.completed }).eq('id', workoutId);
       if (uRes.error){ if (status) status.textContent = 'Could not finalize save: ' + uRes.error.message; return; }
 
       clearAutosaveRecord();
