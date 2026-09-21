@@ -562,7 +562,10 @@ var CONFIG = {
   async function renderCoachMessageBanner(){
     var el = document.getElementById('coach-message-banner');
     if (!el) return;
-    var res = await sb.from('coach_messages').select('id,message,created_at').order('created_at', {ascending:false}).limit(1);
+    var scopedId = await resolveSiteAthleteId();
+    var res = await sb.from('coach_messages').select('id,message,created_at,target_athlete_id')
+      .or('target_athlete_id.is.null' + (scopedId ? ',target_athlete_id.eq.' + scopedId : ''))
+      .order('created_at', {ascending:false}).limit(1);
     if (res.error || !res.data || !res.data.length) return;
     var latest = res.data[0];
     var dismissedId = null;
@@ -593,7 +596,10 @@ var CONFIG = {
     list.style.display = 'block';
     if (label) label.textContent = 'Hide';
     if (pastMessagesLoaded) return;
-    var res = await sb.from('coach_messages').select('message,created_at').order('created_at', {ascending:false}).limit(20);
+    var scopedId = await resolveSiteAthleteId();
+    var res = await sb.from('coach_messages').select('message,created_at,target_athlete_id')
+      .or('target_athlete_id.is.null' + (scopedId ? ',target_athlete_id.eq.' + scopedId : ''))
+      .order('created_at', {ascending:false}).limit(20);
     if (res.error){ list.innerHTML = '<p class="small">Could not load messages.</p>'; return; }
     if (!res.data.length){ list.innerHTML = '<p class="small">No messages yet.</p>'; return; }
     var html = '';
@@ -1379,8 +1385,34 @@ var CONFIG = {
   };
 
   // ---------------- INIT ----------------
+  async function backfillExerciseCounts(){
+    if (!auth.athleteId) return;
+    try {
+      var res = await sb.from('workouts').select('id,phase,workout_type').eq('athlete_id', auth.athleteId).eq('completed', true).is('exercises_planned', null);
+      if (res.error || !res.data || !res.data.length) return;
+      for (var i=0;i<res.data.length;i++){
+        var w = res.data[i];
+        var dayObj = CONFIG.program[w.phase] && CONFIG.program[w.phase][w.workout_type];
+        var exercises = (dayObj && dayObj.exercises) || [];
+        if (!exercises.length) continue;
+        var setsRes = await sb.from('workout_sets').select('exercise').eq('workout_id', w.id);
+        var loggedNames = {};
+        (setsRes.data||[]).forEach(function(s){ loggedNames[s.exercise] = true; });
+        var planned = 0, completed = 0;
+        exercises.forEach(function(ex){
+          var cue = (ex.cue||'').toLowerCase();
+          if (cue.indexOf('optional') > -1) return;
+          planned++;
+          if (loggedNames[ex.name] || loggedNames[ex.name+' (1st)'] || loggedNames[ex.name+' (2nd)']) completed++;
+        });
+        await sb.from('workouts').update({ exercises_planned: planned, exercises_completed: completed }).eq('id', w.id);
+      }
+    } catch(e){}
+  }
+
   function initDashboard(){
     renderHome();
+    backfillExerciseCounts();
     var todayBlock = getPhaseBlock(todayMid());
     selectPhase(todayBlock ? todayBlock.phase : 1);
     var wd = todayMid().getDay();
