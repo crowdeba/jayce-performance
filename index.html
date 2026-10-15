@@ -336,6 +336,7 @@ var CONFIG = {
     {start:"2026-10-17", end:"2026-10-17", label:"Tri Meet"},
     {start:"2026-10-23", end:"2026-10-25", label:"WTRC Meet"},
     {start:"2026-11-06", end:"2026-11-08", label:"Fort Wayne Invite"},
+    {start:"2026-11-13", end:"2026-11-15", label:"Mason Meet"},
     {start:"2026-12-11", end:"2026-12-13", label:"Midseason Meet"},
     {start:"2027-02-12", end:"2027-02-12", label:"HS Sectionals"},
     {start:"2027-02-20", end:"2027-02-20", label:"HS Districts"},
@@ -389,6 +390,7 @@ var CONFIG = {
         ]
       }},
     {start:"2026-11-09", end:"2026-11-09", mode:"no-lift", label:"No Lift"},
+    {start:"2026-11-13", end:"2026-11-13", mode:"no-lift", label:"No Lift — Mason Meet"},
     {start:"2026-11-27", end:"2026-11-27", mode:"no-lift", label:"No Lift — Thanksgiving"},
     {start:"2026-12-09", end:"2026-12-09", mode:"modified", label:"Modified Workout"},
     {start:"2026-12-11", end:"2026-12-11", mode:"no-lift", label:"No Lift — Midseason Meet"},
@@ -1367,8 +1369,8 @@ var CONFIG = {
     html += '<p class="small" style="margin-top:6px;"><strong>Phase:</strong> '+(pb ? pb.label : 'Not in season') + '</p>';
     var liftText;
     if (!lift) liftText = 'No — not a lift day';
-    else if (override && override.mode==='no-lift') liftText = 'No Lift — ' + override.label;
-    else if (override && override.mode==='modified') liftText = 'Modified Workout — ' + override.label;
+    else if (override && override.mode==='no-lift') liftText = (/^No Lift/i.test(override.label) ? override.label : 'No Lift — ' + override.label);
+    else if (override && override.mode==='modified') liftText = (override.plan ? override.label : 'Modified Workout — ' + override.label);
     else liftText = 'Yes — ' + (pb ? 'Phase '+pb.phase : '');
     html += '<p class="small"><strong>Lifting:</strong> '+liftText+'</p>';
     if (override && override.plan){
