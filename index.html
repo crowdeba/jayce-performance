@@ -390,10 +390,187 @@ var CONFIG = {
         ]
       }},
     {start:"2026-11-09", end:"2026-11-09", mode:"no-lift", label:"No Lift"},
-    {start:"2026-11-13", end:"2026-11-13", mode:"no-lift", label:"No Lift — Mason Meet"},
+    // Return week after the shoulder: modified lifts on Wednesday and Friday, then normal sets from Nov 16.
+    {start:"2026-11-11", end:"2026-11-11", mode:"modified", label:"Return Lift — Back From Your Shoulder",
+      plan:{
+        "chip": "Return Lift",
+        "title": "Return Lift",
+        "intro": "This is your first full week back after your shoulder. Today is about two-thirds of the normal sets, with the pressing a little lighter than usual. Keep every set smooth and stop with 3 or more reps left. The shoulder-health work stays at full volume. If anything pinches, stop and tell your coach.",
+        "dropped": [
+          "Incline DB Press"
+        ],
+        "homeNote": "about two-thirds of the normal sets, lighter pressing, full shoulder-health work. Open it that day to see your weights.",
+        "exercises": [
+          {
+            "name": "Dumbbell Chest Press",
+            "sets": 3,
+            "reps": [
+              "6",
+              "6",
+              "6"
+            ],
+            "rest": "2 min",
+            "loadPct": 85,
+            "cue": "Lighter than normal on purpose. Smooth, controlled lowering, stop every set with 3 or more reps left. If the shoulder complains, stop and tell your coach."
+          },
+          {
+            "name": "Straight-Arm Pulldown",
+            "sets": 2,
+            "loadPct": 90,
+            "cue": "Smooth and controlled. Feel your lats, not your shoulders."
+          },
+          {
+            "name": "Tricep Rope Pressdown",
+            "sets": 2,
+            "loadPct": 85,
+            "cue": "Elbows pinned, controlled, full extension."
+          },
+          {
+            "name": "Face Pull",
+            "sets": 3,
+            "loadPct": 100,
+            "cue": "Light and controlled, elbows high. This stays at full volume because it is the shoulder-health work."
+          },
+          {
+            "name": "Shoulder External Rotation",
+            "sets": 3,
+            "loadPct": 100,
+            "cue": "Light and controlled, elbow tucked at your side. Full volume this week."
+          }
+        ]
+      }},
+    {start:"2026-11-13", end:"2026-11-13", mode:"modified", label:"Return Lift — Mason Week",
+      plan:{
+        "chip": "Return Lift",
+        "title": "Return Lift",
+        "intro": "Short and sharp, since you race this weekend. About half the normal sets at near-normal weight. Stop every set with 3 or more reps left, and nothing here should leave you sore.",
+        "dropped": [
+          "Hamstring Curl + Leg Extension Superset"
+        ],
+        "homeNote": "about half the normal sets, short and sharp before the weekend.",
+        "exercises": [
+          {
+            "name": "Box Jump",
+            "sets": 2,
+            "reps": [
+              "3",
+              "3"
+            ],
+            "rest": "2 min",
+            "noTarget": true,
+            "cue": "Pick a low box, jump up fast and land soft, step down. Crisp, not tiring. Stop if landing quality drops."
+          },
+          {
+            "name": "Goblet Squat",
+            "sets": 2,
+            "reps": [
+              "5",
+              "5"
+            ],
+            "rest": "2 min",
+            "loadPct": 90,
+            "cue": "Controlled down, drive up fast. Stop with 3 or more reps left."
+          },
+          {
+            "name": "Seated Row",
+            "sets": 2,
+            "loadPct": 85,
+            "cue": "Chest tall, squeeze your shoulder blades together, controlled."
+          },
+          {
+            "name": "Weighted Back Extension",
+            "sets": 2,
+            "loadPct": 85,
+            "cue": "Controlled up and down. Light today."
+          },
+          {
+            "name": "Hip Abductor / Adductor",
+            "sets": 2,
+            "loadPct": 100,
+            "cue": "Controlled, moderate weight."
+          }
+        ]
+      }},
     {start:"2026-11-27", end:"2026-11-27", mode:"no-lift", label:"No Lift — Thanksgiving"},
-    {start:"2026-12-09", end:"2026-12-09", mode:"modified", label:"Modified Workout"},
-    {start:"2026-12-11", end:"2026-12-11", mode:"no-lift", label:"No Lift — Midseason Meet"},
+    {start:"2026-12-09", end:"2026-12-09", mode:"modified", label:"Meet-Week Lift — Midseason Meet",
+      plan:{
+        "chip": "Meet-Week Lift",
+        "title": "Meet-Week Lift",
+        "intro": "Racing is close, so today's lift is about half the normal sets. Keep the weight close to normal (your targets are on each exercise), stop every set with 3 or more reps left, and move the bar fast and crisp. The goal is to feel sharp for racing, not worked.",
+        "dropped": [
+          "Incline DB Press",
+          "Tricep Rope Pressdown"
+        ],
+        "homeNote": "about half the normal sets at near-normal weight. Open it that day to see your exact weights.",
+        "exercises": [
+          {
+            "name": "Dumbbell Chest Press",
+            "sets": 3,
+            "loadPct": 85
+          },
+          {
+            "name": "Straight-Arm Pulldown",
+            "sets": 2,
+            "loadPct": 90
+          },
+          {
+            "name": "Face Pull",
+            "sets": 2,
+            "loadPct": 100
+          },
+          {
+            "name": "Shoulder External Rotation",
+            "sets": 2,
+            "loadPct": 100
+          }
+        ]
+      }},
+    // Friday of the meet: the default is NO LIFT. To offer the short primer instead, change primerOn to true.
+    {start:"2026-12-11", end:"2026-12-11", mode:"no-lift", label:"No Lift — Midseason Meet",
+      primerOn:false,
+      primerLabel:"Optional Primer — Midseason Meet",
+      primerPlan:{
+        "chip": "Primer",
+        "title": "Optional Primer",
+        "intro": "A short, light, fast activation, about 20 minutes. Nothing here should make you sore or tired. Do it in the morning, only if your coach said go, and skip it if you feel flat or beat up.",
+        "dropped": [],
+        "homeNote": "optional 20-minute primer, only if your coach says go.",
+        "exercises": [
+          {
+            "name": "Box Jump",
+            "sets": 2,
+            "reps": [
+              "3",
+              "3"
+            ],
+            "rest": "2 min",
+            "noTarget": true,
+            "cue": "Light and fast. Land soft and stop with plenty left."
+          },
+          {
+            "name": "Goblet Squat",
+            "sets": 2,
+            "reps": [
+              "3",
+              "3"
+            ],
+            "rest": "90 sec",
+            "loadPct": 60,
+            "cue": "Light and fast. Drive up quickly and stop with plenty left."
+          },
+          {
+            "name": "Dumbbell Chest Press",
+            "sets": 2,
+            "reps": [
+              "3",
+              "3"
+            ],
+            "rest": "90 sec",
+            "loadPct": 60,
+            "cue": "Light and fast. Press quickly and stop with plenty left."
+          }
+        ]
+      }},
     {start:"2026-12-14", end:"2026-12-14", mode:"no-lift", label:"No Lift"},
     {start:"2027-01-01", end:"2027-01-01", mode:"no-lift", label:"No Lift — New Year's Day"},
     {start:"2027-02-10", end:"2027-02-28", mode:"modified", label:"HS Championship Taper — plan TBD"},
