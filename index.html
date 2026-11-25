@@ -348,7 +348,7 @@ var CONFIG = {
   // "Reduced" tapers: Jayce still lifts these days, just lighter. Does NOT remove the workout.
   tapers: [
     {start:"2026-11-04", end:"2026-11-05", label:"Taper: Fort Wayne Invite"},
-    {start:"2026-12-08", end:"2026-12-10", label:"Taper: Midseason Meet"}
+    {start:"2026-12-03", end:"2026-12-10", label:"Taper: Midseason Meet"}
   ],
 
   // liftOverrides: for specific lift days (Mon/Wed/Fri) where Jayce is NOT doing the normal
@@ -492,9 +492,158 @@ var CONFIG = {
         ]
       }},
     {start:"2026-11-27", end:"2026-11-27", mode:"no-lift", label:"No Lift — Thanksgiving"},
-    {start:"2026-12-09", end:"2026-12-09", mode:"modified", label:"Modified Workout"},
+    // Holiday Classic taper (race Fri Dec 11): taper starts Thu Dec 3, lifts get lighter each time, last lift is Wed Dec 9, restart after the meet.
+    {start:"2026-12-04", end:"2026-12-04", mode:"modified", label:"Taper Lift — Midseason Meet",
+      plan:{
+        "chip": "Taper Lift",
+        "title": "Taper Lift",
+        "intro": "The taper starts this week, so today's lift is a little lighter: about three-quarters of the normal sets. Keep the weight close to normal (your targets are on each exercise), stop every set with 3 or more reps left, and move the bar fast and crisp. You should walk out feeling better than when you walked in.",
+        "dropped": [
+          "DB RDL + Leg Extension Superset"
+        ],
+        "homeNote": "about three-quarters of the normal sets at near-normal weight. Open it that day to see your exact weights.",
+        "exercises": [
+          {
+            "name": "Box Jump",
+            "sets": 3,
+            "noTarget": true,
+            "hint": "Same effort as normal. Smaller jumps are fine. Quality only, stop if landings get sloppy."
+          },
+          {
+            "name": "Goblet Squat",
+            "sets": 3,
+            "loadPct": 90
+          },
+          {
+            "name": "Weighted Back Extension",
+            "sets": 2,
+            "loadPct": 90
+          },
+          {
+            "name": "Seated Row",
+            "sets": 2,
+            "loadPct": 95
+          },
+          {
+            "name": "Hip Abductor / Adductor",
+            "sets": 2,
+            "noTarget": true,
+            "hint": "Same as normal."
+          }
+        ]
+      }},
+    {start:"2026-12-07", end:"2026-12-07", mode:"modified", label:"Taper Lift — Midseason Meet",
+      plan:{
+        "chip": "Taper Lift",
+        "title": "Taper Lift",
+        "intro": "Racing is getting close, so today's lift is lighter again: about two-thirds of the normal sets. Keep the weight close to normal (your targets are on each exercise), stop every set with 3 or more reps left, and move the bar fast and crisp. The goal is to feel sharp for racing, not worked.",
+        "dropped": [
+          "Bicep Curls"
+        ],
+        "homeNote": "about two-thirds of the normal sets at near-normal weight. Open it that day to see your exact weights.",
+        "exercises": [
+          {
+            "name": "Trap Bar Deadlift",
+            "sets": 4,
+            "loadPct": 85
+          },
+          {
+            "name": "Weighted Step-Up",
+            "sets": 2,
+            "loadPct": 85
+          },
+          {
+            "name": "Weighted Pull-Up",
+            "sets": 2,
+            "loadPct": 90
+          },
+          {
+            "name": "Lat Pulldown",
+            "sets": 2,
+            "loadPct": 90
+          },
+          {
+            "name": "Chest-Supported / Angled Seated Row",
+            "sets": 2,
+            "loadPct": 90
+          }
+        ]
+      }},
+    {start:"2026-12-09", end:"2026-12-09", mode:"modified", label:"Meet-Week Lift — Midseason Meet",
+      plan:{
+        "chip": "Meet-Week Lift",
+        "title": "Meet-Week Lift",
+        "intro": "Racing is close and this is your last lift before the meet: about half of the normal sets. Keep the weight close to normal (your targets are on each exercise), stop every set with 3 or more reps left, and move the bar fast and crisp. The goal is to feel sharp for racing, not worked.",
+        "dropped": [
+          "Tricep Rope Pressdown"
+        ],
+        "homeNote": "about half of the normal sets at near-normal weight. Open it that day to see your exact weights.",
+        "exercises": [
+          {
+            "name": "Dumbbell Chest Press",
+            "sets": 2,
+            "loadPct": 85
+          },
+          {
+            "name": "Incline DB Press",
+            "sets": 2,
+            "loadPct": 85
+          },
+          {
+            "name": "Straight-Arm Pulldown",
+            "sets": 2,
+            "loadPct": 90
+          },
+          {
+            "name": "Face Pull",
+            "sets": 2,
+            "loadPct": 100
+          },
+          {
+            "name": "Shoulder External Rotation",
+            "sets": 2,
+            "loadPct": 100
+          }
+        ]
+      }},
+    {start:"2026-12-14", end:"2026-12-14", mode:"modified", label:"Optional Restart — Midseason Meet",
+      plan:{
+        "chip": "Optional Restart",
+        "title": "Optional Restart Lift",
+        "intro": "Optional. Only do this if you feel good after racing. Skip it if you are sore, sick or flat. If you do it, it is about 70% of the normal sets, so you ease back in. Keep the weight close to normal (your targets are on each exercise), stop every set with 3 or more reps left, and move the bar fast and crisp. Next lift goes back to normal.",
+        "dropped": [
+          "Bicep Curls"
+        ],
+        "homeNote": "optional, about 70% of the normal sets. Only if you feel good after racing.",
+        "exercises": [
+          {
+            "name": "Trap Bar Deadlift",
+            "sets": 4,
+            "loadPct": 90
+          },
+          {
+            "name": "Weighted Step-Up",
+            "sets": 3,
+            "loadPct": 90
+          },
+          {
+            "name": "Weighted Pull-Up",
+            "sets": 2,
+            "loadPct": 95
+          },
+          {
+            "name": "Lat Pulldown",
+            "sets": 2,
+            "loadPct": 95
+          },
+          {
+            "name": "Chest-Supported / Angled Seated Row",
+            "sets": 2,
+            "loadPct": 95
+          }
+        ]
+      }},
     {start:"2026-12-11", end:"2026-12-11", mode:"no-lift", label:"No Lift — Midseason Meet"},
-    {start:"2026-12-14", end:"2026-12-14", mode:"no-lift", label:"No Lift"},
     {start:"2027-01-01", end:"2027-01-01", mode:"no-lift", label:"No Lift — New Year's Day"},
     {start:"2027-02-10", end:"2027-02-28", mode:"modified", label:"HS Championship Taper — plan TBD"},
     {start:"2027-03-03", end:"2027-03-03", mode:"no-lift", label:"No Lift — Senior Champs"},
